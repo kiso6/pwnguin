@@ -4,12 +4,13 @@ import nmap
 
 # https://nmap.org/book/man-briefoptions.html
 
-# Appel: IP = str | ports "first-last" | options = string des options nmap
+# Call: IP = str | ports "first-last" | options = string des options nmap
 
-def scan_target(IP='127.0.0.1',ports='1-1023',options="-sV -Pn"):
+def scan_target(IP='127.0.0.1',ports='1-1023',options="-sV -Pn --script=vulscan/vulscan.nse"):
     scan = nmap.PortScanner()
     scan.scan(IP,ports,arguments=options,sudo=True)
     res = None
+    print(scan.command_line())
     if scan[IP].state() == 'up':
         otp = open("./scan.csv","w+")
         otp.write(scan.csv())
@@ -20,7 +21,7 @@ def scan_target(IP='127.0.0.1',ports='1-1023',options="-sV -Pn"):
         return -1
     return res
 
-
+# For general purposes
 def extraction(resultCSV):
     extr = {}
     for i in range(len(resultCSV)):
@@ -39,5 +40,14 @@ def extraction(resultCSV):
         extr[i] = inpt
     return extr
 
-import pprint
-pprint.pprint(extraction(scan_target()),sort_dicts=False)
+# For CVE search with cpe
+def extract_cpe(diction):
+    out = []
+    for k in range(len(diction)):
+        out.append(diction[k]['cpe'])
+    return out
+
+
+# import pprint
+# obj = extraction(scan_target())
+# pprint.pprint(obj,sort_dicts=False)
