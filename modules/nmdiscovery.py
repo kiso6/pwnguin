@@ -57,8 +57,8 @@ def extract_cpe(diction):
     return out
 
 
-# 4 test only
-import pprint
-obj = extraction(scan_target())
-pprint.pprint(obj,sort_dicts=False)
-print(extract_cpe(obj))
+# # 4 test only
+# import pprint
+# obj = extraction(scan_target())
+# pprint.pprint(obj,sort_dicts=False)
+# print(extract_cpe(obj))

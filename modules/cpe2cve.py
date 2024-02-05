@@ -9,6 +9,7 @@ import requests
 
 # Function to retrieve CVE data for a given CPE
 def get_cve_data(cpe):
+    print("[~] Current CPE > " +cpe)
     base_url = "https://services.nvd.nist.gov/rest/json/cves/2.0"
     query_params = {"cpeName": cpe}
     response = requests.get(base_url, params=query_params)
@@ -18,45 +19,37 @@ def get_cve_data(cpe):
         cve_data = response.json()
         return cve_data.get("vulnerabilities", [])
     else:
-        print(f"Error in HTTP request: {response.status_code}")
-        return []
+        print(f"[X] Cannot match any CVE for CPE")
+        return None
 
 
-# Main function for parsing command-line arguments and performing the sorting and printing
-def search(cpe):
-    # Set up the argument parser
-    #parser = argparse.ArgumentParser(description="Get and sort CVEs from a CPE")
-    #parser.add_argument(
-    #    "-c", "--cpe", required=True, help="CPE from which to retrieve CVEs"
-    #)
-    #args = parser.parse_args()
 
+def search(cpe_list):
     # Retrieve CVE data for the given CPE
-    cve_data = get_cve_data(cpe)
-    #print(cve_data)
-    # Sort the CVEs by score in descending order
-    #sorted_cve = sorted(cve_data["CVE_Items"], key=get_cve_score, reverse=True)
-    unsorted_cve=[]
-    for i in range (len(cve_data)):
-        auxlist=[]
-        auxlist.append(cve_data[i].get("cve").get("id"))
-        if (cve_data[i].get("cve").get("metrics").get("cvssMetricV31") != None) : 
-            auxlist.append(cve_data[i].get("cve").get("metrics").get("cvssMetricV31")[0].get("cvssData").get("baseScore"))
-            auxlist.append(cve_data[i].get("cve").get("metrics").get("cvssMetricV31")[0].get("cvssData").get("baseSeverity"))
-        elif (cve_data[i].get("cve").get("metrics").get("cvssMetricV30") != None) : 
-            auxlist.append(cve_data[i].get("cve").get("metrics").get("cvssMetricV30")[0].get("cvssData").get("baseScore"))
-            auxlist.append(cve_data[i].get("cve").get("metrics").get("cvssMetricV30")[0].get("cvssData").get("baseSeverity"))
-        elif (cve_data[i].get("cve").get("metrics").get("cvssMetricV2") != None) : 
-            auxlist.append(cve_data[i].get("cve").get("metrics").get("cvssMetricV2")[0].get("impactScore"))
-            auxlist.append(cve_data[i].get("cve").get("metrics").get("cvssMetricV2")[0].get("baseSeverity"))
-        unsorted_cve.append(auxlist)
-    #print(unsorted_cve)
+    cve_list = []
+    for cpe in cpe_list:
+        cve_data = get_cve_data(cpe)
 
-    
-    # Print the sorted CVEs
-    unsorted_cve.sort(key=lambda x: x[1])
-    sorted_cve=unsorted_cve[::-1]
-    return(sorted_cve)
+        if cve_data == None:
+            continue
+
+        unsorted_cve=[]
+        for i in range (len(cve_data)):
+            auxlist=[]
+            auxlist.append(cve_data[i].get("cve").get("id"))
+            if (cve_data[i].get("cve").get("metrics").get("cvssMetricV31") != None) : 
+                auxlist.append(cve_data[i].get("cve").get("metrics").get("cvssMetricV31")[0].get("cvssData").get("baseScore"))
+                auxlist.append(cve_data[i].get("cve").get("metrics").get("cvssMetricV31")[0].get("cvssData").get("baseSeverity"))
+            elif (cve_data[i].get("cve").get("metrics").get("cvssMetricV30") != None) : 
+                auxlist.append(cve_data[i].get("cve").get("metrics").get("cvssMetricV30")[0].get("cvssData").get("baseScore"))
+                auxlist.append(cve_data[i].get("cve").get("metrics").get("cvssMetricV30")[0].get("cvssData").get("baseSeverity"))
+            elif (cve_data[i].get("cve").get("metrics").get("cvssMetricV2") != None) : 
+                auxlist.append(cve_data[i].get("cve").get("metrics").get("cvssMetricV2")[0].get("impactScore"))
+                auxlist.append(cve_data[i].get("cve").get("metrics").get("cvssMetricV2")[0].get("baseSeverity"))
+            unsorted_cve.append(auxlist)
 
 
-print(search('cpe:2.3:a:apache:http_server:2.4.57'))
+        unsorted_cve.sort(key=lambda x: x[1])
+        sorted_cve=unsorted_cve[::-1]
+        cve_list.append(sorted_cve)
+    return(cve_list)
