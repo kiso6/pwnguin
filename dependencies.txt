@@ -1,2 +1,2 @@
-test M 
-test C
+pip install pandas
+pip install nmap
