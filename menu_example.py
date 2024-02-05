@@ -1,6 +1,7 @@
 from time import sleep
 from simple_term_menu import TerminalMenu
 import re
+import modules.nmdiscovery as discovery
 
 
 def scanReseau():
@@ -25,10 +26,12 @@ def scanReseau():
 
 def scanMachine(ip_machine: str):
     print(f"Scan de la machine {ip_machine} ...")
-    options = ["22", "80", "443"]
+    scan = discovery.scan_target(ip_machine)
+    results = discovery.extraction(scan)
+    options = discovery.extract_protocol(results)
     terminal_menu = TerminalMenu(
         options,
-        title="Ports ouvert détécté ! Lequel/Lesqels attaquer ?",
+        title="Services ouverts détéctés ! Lequel/Lesqels attaquer ?",
         multi_select=True,
     )
     menu_entry_index = terminal_menu.show()

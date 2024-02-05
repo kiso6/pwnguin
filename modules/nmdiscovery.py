@@ -10,7 +10,7 @@ def scan_target(IP='127.0.0.1',ports='1-1023',options="-sV -Pn"):
     scan = nmap.PortScanner()
     scan.scan(IP,ports,arguments=options,sudo=True)
     res = None
-    print(scan.command_line())
+    # print(scan.command_line()) ---> debug
     if scan[IP].state() == 'up':
         otp = open("./scan.csv","w+")
         otp.write(scan.csv())
@@ -40,11 +40,20 @@ def extraction(resultCSV):
         extr[i] = inpt
     return extr
 
+def extract_protocol(diction):
+    out = []
+    for k in range(len(diction)):
+        out.append(diction[k]['name'])
+    return out
+
+
 # For CVE search with cpe
 def extract_cpe(diction):
     out = []
     for k in range(len(diction)):
-        out.append(diction[k]['cpe'])
+        lol =""
+        lol = diction[k]['cpe'][0:3]+":2.3:"+diction[k]['cpe'][5:]
+        out.append(lol)
     return out
 
 
@@ -52,3 +61,4 @@ def extract_cpe(diction):
 import pprint
 obj = extraction(scan_target())
 pprint.pprint(obj,sort_dicts=False)
+print(extract_cpe(obj))
