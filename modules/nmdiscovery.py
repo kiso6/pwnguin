@@ -6,7 +6,7 @@ import nmap
 
 # Call: IP = str | ports "first-last" | options = string des options nmap
 
-def scan_target(IP='127.0.0.1',ports='1-1023',options="-sV -Pn --script=vulscan/vulscan.nse"):
+def scan_target(IP='127.0.0.1',ports='1-1023',options="-sV -Pn"):
     scan = nmap.PortScanner()
     scan.scan(IP,ports,arguments=options,sudo=True)
     res = None
@@ -48,6 +48,7 @@ def extract_cpe(diction):
     return out
 
 
-# import pprint
-# obj = extraction(scan_target())
-# pprint.pprint(obj,sort_dicts=False)
+# 4 test only
+import pprint
+obj = extraction(scan_target())
+pprint.pprint(obj,sort_dicts=False)
