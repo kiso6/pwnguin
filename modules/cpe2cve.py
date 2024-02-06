@@ -23,8 +23,8 @@ def get_cve_data(cpe):
 
 
 def search(cpe_list):
-    """Retrieve CVE data for the given CPE"""
-    cve_list = []
+    """Retrieve CVEs data for the given CPEs"""
+    cve_dict = {}
     for cpe in cpe_list:
         cve_data = get_cve_data(cpe)
 
@@ -49,5 +49,5 @@ def search(cpe_list):
 
         unsorted_cve.sort(key=lambda x: x[1])
         sorted_cve = unsorted_cve[::-1]
-        cve_list.append(sorted_cve)
-    return cve_list
+        cve_dict[cpe] = sorted_cve
+    return cve_dict

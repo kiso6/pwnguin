@@ -7,16 +7,24 @@ from pymetasploit3.msfconsole import MsfRpcConsole
 from pymetasploit3.msfrpc import MsfRpcClient
 import pprint as pp
 
+RED = "\033[1;31m"
+YELLOW = "\033[33m"
+BLUE = "\033[1;34m"
+CYAN = "\033[1;36m"
+GREEN = "\033[0;32m"
+RESET = "\033[0;0m"
+BOLD = "\033[;1m"
+REVERSE = "\033[;7m"
+
+LOW = "Low"
+MEDIUM = BLUE + "Medium" + RESET
+HIGH = YELLOW + "High" + RESET
+CRITICAL = RED + "Critical" + RESET
+
+SEVERITY_TEXT = {"LOW": LOW, "MEDIUM": MEDIUM, "HIGH": HIGH, "CRITICAL": CRITICAL}
+
 
 def show_pwnguin():
-    RED = "\033[1;31m"
-    YELLOW = "\033[33m"
-    BLUE = "\033[1;34m"
-    CYAN = "\033[1;36m"
-    GREEN = "\033[0;32m"
-    RESET = "\033[0;0m"
-    BOLD = "\033[;1m"
-    REVERSE = "\033[;7m"
     print(
         f"""
                                             (#(
@@ -42,7 +50,7 @@ def show_pwnguin():
 
 def main():
     show_pwnguin()
-    SCAN = nm.scan_target("127.0.0.1")
+    SCAN = nm.scan_target("192.168.239.250")
 
     extracted = nm.extraction(SCAN)
     print("[V] Nmap scan found protocols :")
@@ -64,11 +72,15 @@ def main():
 
     if CVE_0:
         CVE = []
-        for k in range(len(CVE_0)):
-            for i in range(len(CVE_0[k])):
-                CVE.append(CVE_0[k][i][0])
-        print("[V] CVE List based on NVD NIST database :")
-        pp.pprint(CVE)
+        print("\n[V] CVE List based on NVD NIST database :")
+        for cpe, cves in CVE_0.items():
+            print(cpe)
+            if not cves:
+                print(" - no cve found")
+            for cve in cves:
+                CVE.append(cve[0])
+                print(f" - {cve[0]:<14} {cve[1]:<4} {SEVERITY_TEXT[cve[2]]}")
+
         print("")
     else:
         print("[X] Error in database search.")

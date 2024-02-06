@@ -66,7 +66,8 @@ def extract_cpe(extracted):
             continue
         lol = ""
         lol = extracted[k]["cpe"][0:3] + ":2.3:" + extracted[k]["cpe"][5:]
-        out.append(lol)
+        if lol not in out:
+            out.append(lol)
     return out
 
 
