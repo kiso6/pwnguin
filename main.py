@@ -50,7 +50,7 @@ def show_pwnguin():
 
 def main():
     show_pwnguin()
-    SCAN = nm.scan_target("192.168.239.250")
+    SCAN = nm.scan_target("127.0.0.1")
 
     extracted = nm.extraction(SCAN)
     print("[V] Nmap scan found protocols :")
