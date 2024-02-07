@@ -1,2 +1,4 @@
 /modules/__pycache__/*
 /scan.csv
+/modules/detect.xml
+/modules/exploit_list
