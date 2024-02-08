@@ -1,8 +1,9 @@
-from time import monotonic
+import re
+import subprocess
+import json
 
 from textual.app import App, ComposeResult
 from textual.widgets import (
-    Button,
     Header,
     Footer,
     Static,
@@ -15,13 +16,14 @@ from textual.widgets import (
     TabPane,
     LoadingIndicator,
     DataTable,
+    OptionList,
+    Pretty,
 )
+from textual import work
 from textual.containers import Container
-from textual.containers import ScrollableContainer
-from textual.color import Color
-from textual.reactive import reactive
-from rich.table import Table
 from rich.text import Text
+
+STATE = {"action": None, "IP": None, "target": None, "exploit": None, "payload": None}
 
 vulnerabilities = [
     "vsftpd 2.0.5 - 'CWD' (Authenticated) Remote Memory Consumption",
@@ -200,27 +202,87 @@ networks = {
     "10.0.34.0/24": ["10.0.34.11", "10.0.34.12"],
 }
 
+actions = ["Scan network", "Scan computer"]
+
+
+def perform_scan(IP: str) -> None:
+    CMD = (
+        "./modules/explookup.sh " + IP + " >> /dev/null"
+    )  # Sortie standard dans /dev/null pour la lisibilité, à changer
+    scan = subprocess.run(CMD, shell=True)
+
 
 class Tile1(Static):
+
+    def compose(self) -> ComposeResult:
+        yield OptionList(*actions)
+
     def on_mount(self) -> None:
         self.border_title = "Action Type"
-        self.update("- Scan network\n- Scan computer")
+
+    def on_option_list_option_highlighted(
+        self, event: OptionList.OptionSelected
+    ) -> None:
+        input = self.parent.query_one(Input)
+        if event.option_index == 0:
+            input.placeholder = "Enter network with mask (default: 192.168.0.0/24)"
+        elif event.option_index == 1:
+            input.placeholder = "Enter computer IP (default: 127.0.0.1)"
+        STATE["action"] = event.option_index
+
+    def on_option_list_option_selected(self, event: OptionList.OptionSelected) -> None:
+        input = self.parent.query_one(Input)
+        input.focus()
 
 
 class Tile2(Static):
 
     def compose(self) -> ComposeResult:
-        yield Input()
+        yield Input(placeholder="command here")
 
     def on_mount(self) -> None:
         self.border_title = "Input"
+
+    def on_input_submitted(self, text: str) -> None:
+        input = self.query_one(Input)
+        command = input.value
+        input.value = ""
+        if STATE["action"] == 0:
+            if not command:
+                command = "192.168.0.0/24"
+            if not re.compile(r"^(?:[0-9]{1,3}\.){3}[0-9]{1,3}\/[0-9]{1,2}$").match(
+                command
+            ):
+                input.placeholder = "Wrong format (default: 192.168.0.0/24)"
+                return
+            input.placeholder = "Network scan not implemented yet"
+            STATE["IP"] = command
+        elif STATE["action"] == 1:
+            if not command:
+                command = "127.0.0.1"
+            if not re.compile(r"^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$").match(command):
+                input.placeholder = "Wrong format (default: 127.0.0.1)"
+                return
+            input.placeholder = "Computer scan not implemented yet"
+            STATE["IP"] = command
+            self.perform_scan(STATE["IP"])
+
+    @work(exclusive=True, thread=True)
+    def perform_scan(self, IP: str) -> None:
+        pretty = self.parent.query_one(Pretty)
+        self.app.call_from_thread(pretty.update, "Scanning " + IP)
+        perform_scan(IP)
+        EXPLOIT_LIST = "./exploit_list"
+        with open(EXPLOIT_LIST, "r") as f:
+            result = json.loads(f.read())
+        self.app.call_from_thread(pretty.update, result)
 
 
 class Tile3(Static):
 
     def compose(self) -> ComposeResult:
-        yield Static("nmap scan")
-        yield LoadingIndicator()
+        yield Pretty("Nothing for now")
+        # yield LoadingIndicator()
 
     def on_mount(self) -> None:
         self.border_title = "What is happening ?"
@@ -301,8 +363,8 @@ class Pwnguin(App):
     def compose(self) -> ComposeResult:
         yield Header()
         with Container(classes="grid"):
-            yield Tile1(classes="tile", id="tile1")
-            yield Tile2(classes="tile", id="tile2")
+            yield Tile1(classes="tile centered", id="tile1")
+            yield Tile2(classes="tile centered", id="tile2")
             yield Tile3(classes="tile", id="tile3")
             yield Tile4(classes="tile", id="tile4")
             yield Tile5(classes="tile", id="tile5")
