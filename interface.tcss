@@ -1,0 +1,32 @@
+.grid{
+  layout: grid;
+  grid-size: 4 3;
+  grid-rows: 7 3fr 3fr;
+  grid-columns: 1fr 2fr 2fr 1fr;
+  grid-gutter: 1;
+  padding: 1 1;
+}
+
+.tile {
+  background: $boost;
+  height: 100%;
+  padding: 1 2;
+  border: white;
+}
+
+#tile2 {
+  column-span: 2;
+}
+
+#tile3 {
+  row-span: 3;
+}
+
+#tile4 {
+  row-span: 2;
+}
+
+#tile5 {
+  row-span: 2;
+  column-span: 2;
+}

