@@ -2,3 +2,4 @@ pip install pandas
 pip install python-nmap
 pip install pymetasploit3
 pip install simple_term_menu
+pip install textual
