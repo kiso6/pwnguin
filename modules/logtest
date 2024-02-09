@@ -1,0 +1,155 @@
+[i] INFO [2024-02-08 10:18:51.867706] : Launched autopwn.
+[~] LOG [2024-02-08 10:20:15.083144] : Launching scan over @192.168.1.45 cmd :./explookup.sh 192.168.1.45 >> /dev/null
+[~] LOG [2024-02-08 10:20:15.085000] : Imported exploit_list
+[~] LOG [2024-02-08 10:20:15.085194] : Parsed ./exploit_list
+[~] LOG [2024-02-08 10:20:15.090918] : Displayed possible exploits to user
+[~] LOG [2024-02-08 10:20:20.311542] : User selected UnrealIRCd 3.x - Remote Denia
+[i] INFO [2024-02-08 10:21:35.501712] : Started process msfrpcdUnrealIRCd 3.x - Remote Denia
+[i] INFO [2024-02-08 10:21:55.244448] : Started process msfdb (arg reinit)UnrealIRCd 3.x - Remote Denia
+[i] INFO [2024-02-08 10:22:13.765126] : Launched autopwn.
+[~] LOG [2024-02-08 10:23:38.149801] : Launching scan over @192.168.1.45 cmd :./explookup.sh 192.168.1.45 >> /dev/null
+[~] LOG [2024-02-08 10:23:38.151953] : Imported exploit_list
+[~] LOG [2024-02-08 10:23:38.152121] : Parsed ./exploit_list
+[~] LOG [2024-02-08 10:23:38.157714] : Displayed possible exploits to user
+[~] LOG [2024-02-08 10:23:46.486826] : User selected UnrealIRCd 3.2.8.1 - Backdoor Command Execution 
+[i] INFO [2024-02-08 10:23:53.205370] : Started process msfrpcdUnrealIRCd 3.2.8.1 - Backdoor Command Execution 
+[i] INFO [2024-02-08 10:24:02.236652] : Started process msfdb (arg reinit)UnrealIRCd 3.2.8.1 - Backdoor Command Execution 
+[~] LOG [2024-02-08 10:24:05.334006] : Displayed modules
+[i] INFO [2024-02-08 10:25:36.940757] : Launched autopwn.
+[~] LOG [2024-02-08 10:26:58.390646] : Launching scan over @192.168.1.45 cmd :./explookup.sh 192.168.1.45 >> /dev/null
+[~] LOG [2024-02-08 10:26:58.392587] : Imported exploit_list
+[~] LOG [2024-02-08 10:26:58.392775] : Parsed ./exploit_list
+[~] LOG [2024-02-08 10:26:58.398481] : Displayed possible exploits to user
+[~] LOG [2024-02-08 10:27:01.544008] : User selected UnrealIRCd 3.2.8.1 - Backdoor Command Execution 
+[i] INFO [2024-02-08 10:27:08.441133] : Started process msfrpcdUnrealIRCd 3.2.8.1 - Backdoor Command Execution 
+[i] INFO [2024-02-08 10:27:12.848289] : Started process msfdb (arg reinit)UnrealIRCd 3.2.8.1 - Backdoor Command Execution 
+[~] LOG [2024-02-08 10:27:13.351411] : Displayed modules
+[i] INFO [2024-02-08 10:29:18.484585] : Launched autopwn.
+[~] LOG [2024-02-08 10:30:42.511020] : Launching scan over @192.168.1.45 cmd :./explookup.sh 192.168.1.45 >> /dev/null
+[~] LOG [2024-02-08 10:30:42.512901] : Imported exploit_list
+[~] LOG [2024-02-08 10:30:42.513077] : Parsed ./exploit_list
+[~] LOG [2024-02-08 10:30:42.518904] : Displayed possible exploits to user
+[~] LOG [2024-02-08 10:31:39.489460] : User selected UnrealIRCd 3.2.8.1 - Backdoor Command Execution 
+[i] INFO [2024-02-08 10:31:48.532100] : Started process msfrpcdUnrealIRCd 3.2.8.1 - Backdoor Command Execution 
+[i] INFO [2024-02-08 10:31:50.984007] : Started process msfdb (arg reinit)UnrealIRCd 3.2.8.1 - Backdoor Command Execution 
+[~] LOG [2024-02-08 10:31:51.395107] : Displayed modules
+[i] INFO [2024-02-08 10:36:53.627124] : Launched autopwn.
+[~] LOG [2024-02-08 10:38:16.194316] : Launching scan over @192.168.1.45 cmd :./explookup.sh 192.168.1.45 >> /dev/null
+[~] LOG [2024-02-08 10:38:16.196154] : Imported exploit_list
+[~] LOG [2024-02-08 10:38:16.196341] : Parsed ./exploit_list
+[~] LOG [2024-02-08 10:38:16.202297] : Displayed possible exploits to user
+[~] LOG [2024-02-08 10:38:35.810840] : User selected UnrealIRCd 3.2.8.1 - Backdoor Command Execution 
+[i] INFO [2024-02-08 10:38:42.513879] : Started process msfrpcdUnrealIRCd 3.2.8.1 - Backdoor Command Execution 
+[i] INFO [2024-02-08 10:38:45.821658] : Started process msfdb (arg reinit)UnrealIRCd 3.2.8.1 - Backdoor Command Execution 
+[~] LOG [2024-02-08 10:38:46.215458] : Displayed modules
+[i] INFO [2024-02-08 10:46:04.903764] : Launched autopwn.
+[~] LOG [2024-02-08 10:47:28.167910] : Launching scan over @192.168.1.45 cmd :./explookup.sh 192.168.1.45 >> /dev/null
+[~] LOG [2024-02-08 10:47:28.169758] : Imported exploit_list
+[~] LOG [2024-02-08 10:47:28.169938] : Parsed ./exploit_list
+[~] LOG [2024-02-08 10:47:28.175556] : Displayed possible exploits to user
+[~] LOG [2024-02-08 10:48:25.477665] : User selected UnrealIRCd 3.2.8.1 - Backdoor Command Execution 
+[i] INFO [2024-02-08 10:48:34.462095] : Started process msfrpcdUnrealIRCd 3.2.8.1 - Backdoor Command Execution 
+[i] INFO [2024-02-08 10:48:37.668378] : Started process msfdb (arg reinit)UnrealIRCd 3.2.8.1 - Backdoor Command Execution 
+[~] LOG [2024-02-08 10:48:38.116589] : Displayed modules
+[~] LOG [2024-02-08 10:48:48.282503] : User selected payload
+[~] LOG [2024-02-08 10:49:23.272954] : Shell obtained
+[i] INFO [2024-02-08 10:49:23.273006] : Entered in C&C section
+[~] LOG [2024-02-08 10:49:24.559980] : nc listener opened on target on port 55555
+[*] CRITICAL [2024-02-08 10:49:24.559994] : END OF LOGS
+[i] INFO [2024-02-08 10:59:52.448271] : Launched autopwn.
+[~] LOG [2024-02-08 11:01:16.280440] : Launching scan over @192.168.1.45 cmd :./explookup.sh 192.168.1.45 >> /dev/null
+[~] LOG [2024-02-08 11:01:16.282431] : Imported exploit_list
+[~] LOG [2024-02-08 11:01:16.282595] : Parsed ./exploit_list
+[~] LOG [2024-02-08 11:01:16.289168] : Displayed possible exploits to user
+[~] LOG [2024-02-08 11:01:31.356466] : User selected UnrealIRCd 3.2.8.1 - Backdoor Command Execution 
+[i] INFO [2024-02-08 11:01:40.694038] : Started process msfrpcdUnrealIRCd 3.2.8.1 - Backdoor Command Execution 
+[i] INFO [2024-02-08 11:01:45.228102] : Started process msfdb (arg reinit)UnrealIRCd 3.2.8.1 - Backdoor Command Execution 
+[~] LOG [2024-02-08 11:01:45.679381] : Displayed modules
+[i] INFO [2024-02-08 11:02:25.247159] : Launched autopwn.
+[~] LOG [2024-02-08 11:03:47.566370] : Launching scan over @192.168.1.45 cmd :./explookup.sh 192.168.1.45 >> /dev/null
+[~] LOG [2024-02-08 11:03:47.568148] : Imported exploit_list
+[~] LOG [2024-02-08 11:03:47.568320] : Parsed ./exploit_list
+[~] LOG [2024-02-08 11:03:47.573832] : Displayed possible exploits to user
+[~] LOG [2024-02-08 11:03:50.408898] : User selected UnrealIRCd 3.2.8.1 - Backdoor Command Execution 
+[i] INFO [2024-02-08 11:04:00.115961] : Started process msfrpcdUnrealIRCd 3.2.8.1 - Backdoor Command Execution 
+[i] INFO [2024-02-08 11:04:02.921003] : Started process msfdb (arg reinit)UnrealIRCd 3.2.8.1 - Backdoor Command Execution 
+[~] LOG [2024-02-08 11:04:03.295481] : Displayed modules
+[i] INFO [2024-02-08 11:04:30.399248] : Launched autopwn.
+[~] LOG [2024-02-08 11:05:52.962998] : Launching scan over @192.168.1.45 cmd :./explookup.sh 192.168.1.45 >> /dev/null
+[~] LOG [2024-02-08 11:05:52.964854] : Imported exploit_list
+[~] LOG [2024-02-08 11:05:52.965015] : Parsed ./exploit_list
+[~] LOG [2024-02-08 11:05:52.971567] : Displayed possible exploits to user
+[~] LOG [2024-02-08 11:06:11.864111] : User selected UnrealIRCd 3.2.8.1 - Backdoor Command Execution 
+[i] INFO [2024-02-08 11:06:18.603711] : Started process msfrpcdUnrealIRCd 3.2.8.1 - Backdoor Command Execution 
+[i] INFO [2024-02-08 11:06:20.432436] : Started process msfdb (arg reinit)UnrealIRCd 3.2.8.1 - Backdoor Command Execution 
+[~] LOG [2024-02-08 11:06:20.817414] : Displayed modules
+[~] LOG [2024-02-08 11:06:23.283951] : User selected payload
+[~] LOG [2024-02-08 11:06:52.355999] : Shell obtained
+[i] INFO [2024-02-08 11:06:52.356043] : Entered in C&C section
+[~] LOG [2024-02-08 11:06:53.696885] : nc listener opened on target on port 55555
+[*] CRITICAL [2024-02-08 11:06:53.696901] : END OF LOGS
+[i] INFO [2024-02-08 11:09:13.464692] : Launched autopwn.
+[~] LOG [2024-02-08 11:10:37.059498] : Launching scan over @192.168.1.45 cmd :./explookup.sh 192.168.1.45 >> /dev/null
+[~] LOG [2024-02-08 11:10:37.061438] : Imported exploit_list
+[~] LOG [2024-02-08 11:10:37.061625] : Parsed ./exploit_list
+[~] LOG [2024-02-08 11:10:37.067590] : Displayed possible exploits to user
+[~] LOG [2024-02-08 11:11:26.029404] : User selected UnrealIRCd 3.2.8.1 - Backdoor Command Execution 
+[i] INFO [2024-02-08 11:11:32.435544] : Started process msfrpcdUnrealIRCd 3.2.8.1 - Backdoor Command Execution 
+[i] INFO [2024-02-08 11:11:34.178044] : Started process msfdb (arg reinit)UnrealIRCd 3.2.8.1 - Backdoor Command Execution 
+[~] LOG [2024-02-08 11:11:34.560854] : Displayed modules
+[~] LOG [2024-02-08 11:11:41.780527] : User selected payload
+[~] LOG [2024-02-08 11:12:47.957001] : Shell obtained
+[i] INFO [2024-02-08 11:12:47.957044] : Entered in C&C section
+[~] LOG [2024-02-08 11:12:49.258882] : nc listener opened on target on port 55555
+[*] CRITICAL [2024-02-08 11:12:49.258897] : END OF LOGS
+[i] INFO [2024-02-08 11:15:00.159306] : Launched autopwn.
+[~] LOG [2024-02-08 11:16:23.013663] : Launching scan over @192.168.1.45 cmd :./explookup.sh 192.168.1.45 >> /dev/null
+[~] LOG [2024-02-08 11:16:23.015561] : Imported exploit_list
+[~] LOG [2024-02-08 11:16:23.015730] : Parsed ./exploit_list
+[~] LOG [2024-02-08 11:16:23.021723] : Displayed possible exploits to user
+[~] LOG [2024-02-08 11:16:27.584899] : User selected UnrealIRCd 3.2.8.1 - Backdoor Command Execution 
+[i] INFO [2024-02-08 11:16:34.150715] : Started process msfrpcdUnrealIRCd 3.2.8.1 - Backdoor Command Execution 
+[i] INFO [2024-02-08 11:16:36.070800] : Started process msfdb (arg reinit)UnrealIRCd 3.2.8.1 - Backdoor Command Execution 
+[~] LOG [2024-02-08 11:16:36.451980] : Displayed modules
+[~] LOG [2024-02-08 11:16:59.939254] : User selected payload
+[~] LOG [2024-02-08 11:17:35.410208] : Shell obtained
+[i] INFO [2024-02-08 11:17:35.410256] : Entered in C&C section
+[~] LOG [2024-02-08 11:17:36.767871] : nc listener opened on target on port 55555
+[*] CRITICAL [2024-02-08 11:17:36.767890] : END OF LOGS
+[i] INFO [2024-02-08 11:19:05.072563] : Launched autopwn.
+[~] LOG [2024-02-08 11:20:28.632347] : Launching scan over @192.168.1.45 cmd :./explookup.sh 192.168.1.45 >> /dev/null
+[~] LOG [2024-02-08 11:20:28.634654] : Imported exploit_list
+[~] LOG [2024-02-08 11:20:28.634848] : Parsed ./exploit_list
+[~] LOG [2024-02-08 11:20:28.641919] : Displayed possible exploits to user
+[~] LOG [2024-02-08 11:21:10.830517] : User selected Horde 3.3.12 - Backdoor Arbitrary PHP Code Execution 
+[i] INFO [2024-02-08 11:21:17.286126] : Started process msfrpcdHorde 3.3.12 - Backdoor Arbitrary PHP Code Execution 
+[i] INFO [2024-02-08 11:21:18.843537] : Started process msfdb (arg reinit)Horde 3.3.12 - Backdoor Arbitrary PHP Code Execution 
+[~] LOG [2024-02-08 11:21:19.187437] : Displayed modules
+[~] LOG [2024-02-08 11:21:37.574072] : User selected payload
+[~] LOG [2024-02-08 11:22:05.215115] : Shell obtained
+[i] INFO [2024-02-08 11:22:05.215147] : Entered in C&C section
+[~] LOG [2024-02-08 11:22:06.532119] : nc listener opened on target on port 55555
+[*] CRITICAL [2024-02-08 11:22:06.532147] : END OF LOGS
+[i] INFO [2024-02-08 11:23:22.517633] : Launched autopwn.
+[~] LOG [2024-02-08 11:24:45.954409] : Launching scan over @192.168.1.45 cmd :./explookup.sh 192.168.1.45 >> /dev/null
+[~] LOG [2024-02-08 11:24:45.956544] : Imported exploit_list
+[~] LOG [2024-02-08 11:24:45.956777] : Parsed ./exploit_list
+[~] LOG [2024-02-08 11:24:45.963309] : Displayed possible exploits to user
+[~] LOG [2024-02-08 11:25:22.834678] : User selected Optergy 2.3.0a - Remote Code Executio
+[i] INFO [2024-02-08 11:25:29.239034] : Started process msfrpcdOptergy 2.3.0a - Remote Code Executio
+[i] INFO [2024-02-08 11:25:30.835798] : Started process msfdb (arg reinit)Optergy 2.3.0a - Remote Code Executio
+[~] LOG [2024-02-08 11:25:31.201464] : Displayed modules
+[i] INFO [2024-02-08 11:25:44.264386] : Launched autopwn.
+[~] LOG [2024-02-08 11:27:07.737232] : Launching scan over @192.168.1.45 cmd :./explookup.sh 192.168.1.45 >> /dev/null
+[~] LOG [2024-02-08 11:27:07.739246] : Imported exploit_list
+[~] LOG [2024-02-08 11:27:07.739437] : Parsed ./exploit_list
+[~] LOG [2024-02-08 11:27:07.745269] : Displayed possible exploits to user
+[~] LOG [2024-02-08 11:27:29.697469] : User selected UnrealIRCd 3.2.8.1 - Backdoor Command Execution 
+[i] INFO [2024-02-08 11:27:36.187253] : Started process msfrpcdUnrealIRCd 3.2.8.1 - Backdoor Command Execution 
+[i] INFO [2024-02-08 11:27:37.923658] : Started process msfdb (arg reinit)UnrealIRCd 3.2.8.1 - Backdoor Command Execution 
+[~] LOG [2024-02-08 11:27:39.012203] : Displayed modules
+[~] LOG [2024-02-08 11:27:44.781791] : User selected payload
+[~] LOG [2024-02-08 11:28:10.914567] : Shell obtained
+[i] INFO [2024-02-08 11:28:10.914636] : Entered in C&C section
+[~] LOG [2024-02-08 11:28:12.335496] : nc listener opened on target on port 55555
+[*] CRITICAL [2024-02-08 11:28:12.335516] : END OF LOGS
