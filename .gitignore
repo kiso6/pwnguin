@@ -3,5 +3,5 @@
 **/detect.xml
 **/exploit_list
 /modules/stdoutput
-/modules/logtest
+**/logtest
 .vscode

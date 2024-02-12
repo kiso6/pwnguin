@@ -1,7 +1,7 @@
 import re
 import subprocess
 import json
-import time
+import autopwn as autopwn
 from pymetasploit3.msfrpc import MsfRpcClient, ExploitModule, PayloadModule
 
 
@@ -82,19 +82,6 @@ networks = {
 actions = ["Scan network", "Scan computer"]
 
 
-def perform_scan(IP: str) -> None:
-    CMD = (
-        "./modules/explookup.sh " + IP + ""
-    )  # Sortie standard dans /dev/null pour la lisibilité, à changer
-    scan = subprocess.Popen(CMD, shell=True, stdout=subprocess.PIPE, text=True)
-    lines = []
-    while scan.poll() is None:
-        s = scan.stdout.readline()
-        if s:
-            lines += [s]
-            app.call_from_thread(app.query_one("#logs", Pretty).update, lines)
-
-
 class Tile1(Static):
 
     def compose(self) -> ComposeResult:
@@ -155,20 +142,14 @@ class Tile2(Static):
     def perform_scan(self, IP: str) -> None:
         pretty = self.parent.query_one("#logs", Pretty)
         self.app.call_from_thread(pretty.update, "Scanning " + IP)
-        perform_scan(IP)
-        EXPLOIT_LIST = "./exploit_list"
-        with open(EXPLOIT_LIST, "r") as f:
-            result = json.loads(f.read())
+
+        result = autopwn.scanIp4Vulnerabilities(ip=IP)
         self.app.call_from_thread(pretty.update, result)
 
-        # Create exploits from the list of research
-        exploits = []
-        for search in result:
-            exploits += search["RESULTS_EXPLOIT"]
-        titles = [pwn["Title"] for pwn in exploits]
-        titles = list(set(titles))
-
+        (titles, metaexploits) = autopwn.createExploitList(result)
+        titles = [title[1] for title in titles]
         STATE["vulnerabilities"] = titles
+
         vuln_list = self.parent.query_one("#vuln_list", OptionList)
         self.app.call_from_thread(vuln_list.clear_options)
         self.app.call_from_thread(vuln_list.add_options, titles)
@@ -210,10 +191,11 @@ class VulnChoice(Static):
     def select_vuln(self, event: OptionList.OptionSelected) -> None:
         STATE["vulnerability"] = event.option_index
         client: MsfRpcClient = STATE["client"]
-        modules = client.modules.search(
-            STATE["vulnerabilities"][event.option_index][:-12]
+        modules = autopwn.searchModules(
+            client, STATE["vulnerabilities"][event.option_index][:-12]
         )
         STATE["exploits"] = modules
+
         exploitsList = self.app.query_one("#exploit_list", OptionList)
         exploitsList = exploitsList.clear_options()
         exploits = [
@@ -373,16 +355,8 @@ class Pwnguin(App):
 
     @work(exclusive=True, thread=True)
     def init_app(self):
-        proc = subprocess.run(
-            "msfrpcd -P yourpassword", shell=True, stderr=subprocess.DEVNULL
-        )
-        proc = subprocess.run(
-            "echo 'yes' | msfdb reinit",
-            shell=True,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )  # if db problem
-        STATE["client"] = MsfRpcClient("yourpassword", ssl=True)
+        client = autopwn.runMetasploit(reinit=True, show=False)
+        STATE["client"] = client
         self.app.call_from_thread(self.end_init)
 
     def end_init(self):
