@@ -291,21 +291,6 @@ def autopwn():
     return (shell, client, ipport)
 
 
-# ,
-# "./linpeas.sh -o users_information,software_information"]
-
-# if shell:
-#     for command in sequence:
-#         print(command)
-#         shell.write(command)
-#         time.sleep(5) # Todo : modifier le sleep
-#         print(shell.read())
-#         if(str(shell.read()).isprintable()):
-#             print(str(shell.read()))
-#         else:
-#             print("coucou")
-
-
 def sendCommands(shell, sequence=[]) -> int:
     """Automated interaction with shell on target"""
     if len(sequence) == 0:
