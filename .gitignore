@@ -5,3 +5,4 @@
 /modules/stdoutput
 **/logtest
 .vscode
+/modules/edb/*

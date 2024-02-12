@@ -86,6 +86,7 @@ def scanIp4Vulnerabilities(exploit_path=EXPLOIT_LIST, ip=IP):
 
 
 def getEdbExploit(res=[]):
+    """ Retrieve EDB exploits that are missing in metasploit """
     edbExploits = []
     for search in res:
         edbExploits += search["RESULTS_EXPLOIT"]
@@ -240,7 +241,7 @@ def autopwn():
     else:
         results = scanIp4Vulnerabilities(EXPLOIT_LIST, IP)
     (exploits, metaexploits) = createExploitList(results)
-    getEdbExploit(results)
+    # getEdbExploit(results)
 
     print("[~] Generic exploits :")
     if exploits:
