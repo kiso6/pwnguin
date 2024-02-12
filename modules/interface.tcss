@@ -75,3 +75,7 @@
 #params_list > * {
   padding: 1;
 }
+
+Log {
+  height: 15;
+}

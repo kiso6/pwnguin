@@ -2,7 +2,12 @@ import re
 import subprocess
 import json
 import autopwn as autopwn
-from pymetasploit3.msfrpc import MsfRpcClient, ExploitModule, PayloadModule
+from pymetasploit3.msfrpc import (
+    MsfRpcClient,
+    ExploitModule,
+    PayloadModule,
+    ShellSession,
+)
 
 
 from textual.app import App, ComposeResult
@@ -22,10 +27,13 @@ from textual.widgets import (
     OptionList,
     Pretty,
     Button,
+    Log,
 )
+from textual.widget import Widget
 from textual import work, on, log
 from textual.color import Color
-from textual.containers import Container, Horizontal
+from textual.containers import Container, Horizontal, ScrollableContainer
+from textual.reactive import reactive
 from rich.style import Style
 from rich.text import Text
 
@@ -290,6 +298,15 @@ class ParamMenu(Static):
         self.app.call_from_thread(
             self.app.query_one("#logs", Pretty).update, client.sessions.list
         )
+        all_sessions = client.sessions.list
+        self.app.call_from_thread(self.app.query_one(Tile5).set_active_tab, "shell_tab")
+        self.app.call_from_thread(self.app.query_one("#shells_list", ListView).focus)
+        self.app.call_from_thread(
+            self.app.query_one(ShellMenu).add_shell,
+            "1",
+            all_sessions["1"]["tunnel_local"],
+            all_sessions["1"]["tunnel_peer"],
+        )
 
     def param_item_widget(self, name: str, placeholder) -> ListItem:
         return ListItem(Container(Label(name), Input(placeholder=placeholder)))
@@ -310,8 +327,48 @@ class ParamMenu(Static):
         params_list.focus()
 
 
-class Tile5(Static):
+class ShellMenu(Static):
 
+    def compose(self) -> ComposeResult:
+        with ScrollableContainer(id="shells_container"):
+            yield ListView(id="shells_list")
+
+    def add_shell(self, shell_id: str, tunnel_local: str, tunnel_peer: str) -> None:
+        shellsList = self.query_one(ListView)
+
+        shellsList.append(
+            ListItem(
+                Container(
+                    Label(f"Shell {shell_id}, {tunnel_local} -> {tunnel_peer}"),
+                    Input(placeholder="command"),
+                    Log(),
+                )
+            )
+        )
+
+    @on(ListView.Selected)
+    def select(self, event: ListView.Selected) -> None:
+        event.item.query_one(Input).focus()
+
+    @on(Input.Submitted)
+    def exec(self, event: Input.Submitted) -> None:
+        cmd = event.input.value
+        container = event.input.parent
+        label = container.query_one(Label)
+        label_str = str(label.renderable)
+        log = container.query_one(Log)
+        log.write_line(f"$ {cmd}")
+        id = label_str.split(" ")[1].split(",")[0]
+        client: MsfRpcClient = STATE["client"]
+        shell: ShellSession = client.sessions.session(id)
+        shell.write(cmd)
+        s = shell.read()
+        while not s:
+            pass
+        log.write_line(s)
+
+
+class Tile5(Static):
     def compose(self) -> ComposeResult:
         with TabbedContent():
             with TabPane("Vulnerabilities", id="vuln_tab"):
@@ -321,7 +378,9 @@ class Tile5(Static):
             with TabPane("Payload Menu", id="payload_tab"):
                 yield PayloadMenu()
             with TabPane("Parameters", id="param_tab"):
-                yield ParamMenu("Exploit")
+                yield ParamMenu()
+            with TabPane("Shells", id="shell_tab"):
+                yield ShellMenu()
 
     def on_mount(self) -> None:
         self.border_title = "Exploitation"
