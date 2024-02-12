@@ -229,7 +229,12 @@ def exploitVuln(client=None, modlist=[]) -> None:
 def getShell(client=None, id="1"):
     """Get shell from ID session"""
     LOG("Shell obtained", logfile, "log")
-    return client.sessions.session(id)
+    shell = client.sessions.session(id)
+    try:
+        return client.sessions.session(id)
+    except:
+        print("Error shell")
+        return -10
 
 
 def autopwn():
@@ -313,6 +318,10 @@ def sendCommands(shell, sequence=[]) -> int:
 
 
 if __name__ == "__main__":
+    if debug == 1:
+        print("**** RUNNING IN DEBUG MODE ****")
+
+
     if len(sys.argv) > 1:
         IP = sys.argv[1]
 
