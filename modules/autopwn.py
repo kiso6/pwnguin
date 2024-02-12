@@ -38,6 +38,7 @@ LOG("Launched autopwn.", logfile, "inf")
 IP = "192.168.1.45"
 EXPLOIT_LIST = "./exploit_list"
 
+debug = 0
 
 def show_pwnguin():
     """Displays pwngin ASCII art logo, nothing useful"""
@@ -234,7 +235,11 @@ def getShell(client=None, id="1"):
 def autopwn():
     show_pwnguin()
 
-    results = scanIp4Vulnerabilities(EXPLOIT_LIST, IP)
+    if (debug) : 
+        with open(EXPLOIT_LIST, "r+") as f:
+            results = json.loads(f.read())
+    else :
+        results = scanIp4Vulnerabilities(EXPLOIT_LIST, IP)
     (exploits, metaexploits) = createExploitList(results)
     getEdbExploit(results)
 
