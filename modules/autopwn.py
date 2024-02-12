@@ -40,6 +40,7 @@ EXPLOIT_LIST = "./exploit_list"
 
 debug = 0
 
+
 def show_pwnguin():
     """Displays pwngin ASCII art logo, nothing useful"""
     print(
@@ -88,34 +89,17 @@ def getEdbExploit(res=[]):
     edbExploits = []
     for search in res:
         edbExploits += search["RESULTS_EXPLOIT"]
-
     paths = []
     if edbExploits:
-<<<<<<< Updated upstream
-        paths = [pwn["Path"] for pwn in edbExploits]
-
-    if paths:
-        k = 0
-=======
         for pwn in edbExploits:
             print(pwn)
             if not ("(Metasploit)" in pwn["Title"]):
                 paths.append(pwn["Path"])
-
-    pprint.pprint(paths)
-
     if paths:
->>>>>>> Stashed changes
         for path in paths:
             command = "cp " + path + " ./edb/" + str(path.split("/")[-1])
-            print(command)
-<<<<<<< Updated upstream
+            #    print(command)
             subprocess.run(command, shell=True)
-            k += 1
-    pprint.pprint(paths)
-=======
-            subprocess.run(command,shell=True)
->>>>>>> Stashed changes
 
 
 def createExploitList(res=[]) -> tuple[list[str], list[str]]:
@@ -250,10 +234,10 @@ def getShell(client=None, id="1"):
 def autopwn():
     show_pwnguin()
 
-    if (debug) : 
+    if debug:
         with open(EXPLOIT_LIST, "r+") as f:
             results = json.loads(f.read())
-    else :
+    else:
         results = scanIp4Vulnerabilities(EXPLOIT_LIST, IP)
     (exploits, metaexploits) = createExploitList(results)
     getEdbExploit(results)
