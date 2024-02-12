@@ -190,9 +190,8 @@ class VulnChoice(Static):
     @on(OptionList.OptionSelected)
     def select_vuln(self, event: OptionList.OptionSelected) -> None:
         STATE["vulnerability"] = event.option_index
-        client: MsfRpcClient = STATE["client"]
         modules = autopwn.searchModules(
-            client, STATE["vulnerabilities"][event.option_index][:-12]
+            STATE["client"], STATE["vulnerabilities"][event.option_index][:-12]
         )
         STATE["exploits"] = modules
 
@@ -224,14 +223,14 @@ class ExploitMenu(Static):
     def select_exploit(self, event: OptionList.OptionSelected) -> None:
         STATE["exploit"] = event.option_index
         exploit = STATE["exploits"][event.option_index]
-        client: MsfRpcClient = STATE["client"]
-        exploit_ms = client.modules.use(exploit["type"], exploit["fullname"])
+        exploit_ms, compatible_payloads = autopwn.selectExploitMS(
+            STATE["client"], exploit["fullname"]
+        )
         STATE["exploit_ms"] = exploit_ms
-        payloads = exploit_ms.targetpayloads()
-        STATE["payloads"] = payloads
+        STATE["payloads"] = compatible_payloads
         payloadsList = self.app.query_one("#payload_list", OptionList)
         payloadsList.clear_options()
-        payloadsList.add_options([Text(payload) for payload in payloads])
+        payloadsList.add_options([Text(payload) for payload in compatible_payloads])
         self.app.query_one(TabbedContent).active = "payload_tab"
         payloadsList.focus()
 
@@ -245,9 +244,7 @@ class PayloadMenu(Static):
     def select_payload(self, event: OptionList.OptionSelected) -> None:
         STATE["payload"] = event.option_index
         payload = STATE["payloads"][event.option_index]
-        client: MsfRpcClient = STATE["client"]
-        payload_ms = client.modules.use("payload", payload)
-        STATE["payload_ms"] = payload_ms
+        STATE["payload_ms"] = autopwn.selectPayloadMS(STATE["client"], payload)
         self.app.query_one(ParamMenu).create()
         self.app.query_one(TabbedContent).active = "param_tab"
 
