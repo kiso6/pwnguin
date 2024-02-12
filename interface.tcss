@@ -35,3 +35,43 @@
 .centered {
   align: center middle;
 }
+
+.horizontal {
+  height: 2;
+}
+
+.horizontal > * {
+  padding: 0 1;
+}
+
+.red {
+  color: red;
+}
+
+.orange {
+  color: orange;
+}
+
+.yellow {
+  color: yellow;
+}
+
+.green {
+  color: green;
+}
+
+.blue {
+  color: blue;
+}
+
+.grey {
+  color: grey;
+}
+
+.white {
+  color: white;
+}
+
+#params_list > * {
+  padding: 1;
+}
