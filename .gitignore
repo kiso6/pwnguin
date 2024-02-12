@@ -1,7 +1,7 @@
-/modules/__pycache__/*
+**/__pycache__/*
 /scan.csv
-/modules/detect.xml
-/modules/exploit_list
+**/detect.xml
+**/exploit_list
 /modules/stdoutput
 /modules/logtest
 .vscode

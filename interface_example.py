@@ -84,9 +84,15 @@ actions = ["Scan network", "Scan computer"]
 
 def perform_scan(IP: str) -> None:
     CMD = (
-        "./modules/explookup.sh " + IP + " >> /dev/null"
+        "./modules/explookup.sh " + IP + ""
     )  # Sortie standard dans /dev/null pour la lisibilité, à changer
-    scan = subprocess.run(CMD, shell=True)
+    scan = subprocess.Popen(CMD, shell=True, stdout=subprocess.PIPE, text=True)
+    lines = []
+    while scan.poll() is None:
+        s = scan.stdout.readline()
+        if s:
+            lines += [s]
+            app.call_from_thread(app.query_one("#logs", Pretty).update, lines)
 
 
 class Tile1(Static):
@@ -160,6 +166,7 @@ class Tile2(Static):
         for search in result:
             exploits += search["RESULTS_EXPLOIT"]
         titles = [pwn["Title"] for pwn in exploits]
+        titles = list(set(titles))
 
         STATE["vulnerabilities"] = titles
         vuln_list = self.parent.query_one("#vuln_list", OptionList)
@@ -299,7 +306,8 @@ class ParamMenu(Static):
         exploit = STATE["exploit_ms"]
         payload = STATE["payload_ms"]
         exploit.execute(payload=payload)
-        time.sleep(20)
+        while len(client.jobs.list) != 0:
+            pass
         self.app.call_from_thread(
             self.app.query_one("#logs", Pretty).update, client.sessions.list
         )
@@ -368,7 +376,6 @@ class Pwnguin(App):
         proc = subprocess.run(
             "msfrpcd -P yourpassword", shell=True, stderr=subprocess.DEVNULL
         )
-        time.sleep(5)
         proc = subprocess.run(
             "echo 'yes' | msfdb reinit",
             shell=True,
@@ -385,3 +392,4 @@ class Pwnguin(App):
 if __name__ == "__main__":
     app = Pwnguin()
     app.run()
+    subprocess.run("kill $(ps aux | grep 'msfrpcd' | awk '{print $2}')", shell=True)
