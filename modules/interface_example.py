@@ -87,7 +87,7 @@ networks = {
     "10.0.34.0/24": ["10.0.34.11", "10.0.34.12"],
 }
 
-actions = ["Scan network", "Scan computer"]
+actions = ["Scan computer", "Scan network"]
 
 
 class Tile1(Static):
@@ -101,9 +101,9 @@ class Tile1(Static):
     @on(OptionList.OptionHighlighted)
     def show_selected(self, event: OptionList.OptionHighlighted) -> None:
         input = self.parent.query_one("#command", Input)
-        if event.option_index == 0:
+        if event.option_index == 1:
             input.placeholder = "Enter network with mask (default: 192.168.0.0/24)"
-        elif event.option_index == 1:
+        elif event.option_index == 0:
             input.placeholder = "Enter computer IP (default: 127.0.0.1)"
         STATE["action"] = event.option_index
 
@@ -126,7 +126,7 @@ class Tile2(Static):
         input = self.query_one(Input)
         command = input.value
         input.value = ""
-        if STATE["action"] == 0:
+        if STATE["action"] == 1:
             if not command:
                 command = "192.168.0.0/24"
             if not re.compile(r"^(?:[0-9]{1,3}\.){3}[0-9]{1,3}\/[0-9]{1,2}$").match(
@@ -136,7 +136,7 @@ class Tile2(Static):
                 return
             input.placeholder = "Network scan not implemented yet"
             STATE["IP"] = command
-        elif STATE["action"] == 1:
+        elif STATE["action"] == 0:
             if not command:
                 command = "127.0.0.1"
             if not re.compile(r"^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$").match(command):
@@ -353,6 +353,7 @@ class ShellMenu(Static):
     @on(Input.Submitted)
     def exec(self, event: Input.Submitted) -> None:
         cmd = event.input.value
+        event.input.value = ""
         container = event.input.parent
         label = container.query_one(Label)
         label_str = str(label.renderable)
@@ -362,10 +363,14 @@ class ShellMenu(Static):
         client: MsfRpcClient = STATE["client"]
         shell: ShellSession = client.sessions.session(id)
         shell.write(cmd)
+        self.update_shell(shell, log)
+
+    @work(exclusive=True, thread=True)
+    def update_shell(self, shell, log):
         s = shell.read()
         while not s:
             pass
-        log.write_line(s)
+        self.app.call_from_thread(log.write_line, s)
 
 
 class Tile5(Static):
