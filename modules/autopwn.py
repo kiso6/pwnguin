@@ -38,7 +38,7 @@ LOG("Launched autopwn.", logfile, "inf")
 IP = "192.168.1.45"
 EXPLOIT_LIST = "./exploit_list"
 
-debug = 0
+debug = 1
 
 
 def show_pwnguin():
@@ -70,16 +70,17 @@ def scanIp4Vulnerabilities(exploit_path=EXPLOIT_LIST, ip=IP):
     """Scans IP loofing for vulnerabilities and output the
     related exploit list to be parsed (in json)
     """
-    cmd = "./explookup.sh " + ip + " >> /dev/null"
-    scan = subprocess.run(cmd, shell=True)
-    if scan:
-        msg = "Launching scan over @" + ip + " cmd :" + cmd
-        print("[i] Launching scan over @" + ip + " cmd :" + cmd)
-        LOG(msg, logfile, "log")
-    else:
-        LOG("Error 1 : nmap failed.", logfile, "err")
-        print("[X] Error 1 : nmap failed.")
-        exit(-1)
+    if (debug == 0) :
+        cmd = "./explookup.sh " + ip + " >> /dev/null"
+        scan = subprocess.run(cmd, shell=True)
+        if scan:
+            msg = "Launching scan over @" + ip + " cmd :" + cmd
+            print("[i] Launching scan over @" + ip + " cmd :" + cmd)
+            LOG(msg, logfile, "log")
+        else:
+            LOG("Error 1 : nmap failed.", logfile, "err")
+            print("[X] Error 1 : nmap failed.")
+            exit(-1)
     with open(exploit_path, "r+") as f:
         result = json.loads(f.read())
     return result
@@ -239,12 +240,8 @@ def getShell(client=None, id="1"):
 
 def autopwn():
     show_pwnguin()
-
-    if debug:
-        with open(EXPLOIT_LIST, "r+") as f:
-            results = json.loads(f.read())
-    else:
-        results = scanIp4Vulnerabilities(EXPLOIT_LIST, IP)
+    
+    results = scanIp4Vulnerabilities(EXPLOIT_LIST, IP)
     (exploits, metaexploits) = createExploitList(results)
     # getEdbExploit(results)
 
