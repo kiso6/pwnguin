@@ -7,3 +7,5 @@ rm -r ./edb/mult/*
 rm -r ./edb/cgi/*
 rm -r ./edb/win/*
 rm -r ./edb/lin/*
+rm -r ./post/__pycache__/*
+rm ./post/hosts
