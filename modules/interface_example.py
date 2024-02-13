@@ -1,6 +1,7 @@
 import re
 import subprocess
 import json
+from time import sleep
 
 from textual.events import Mount
 import autopwn as autopwn
@@ -36,6 +37,7 @@ from textual.widget import Widget
 from textual import work, on, log
 from textual.color import Color
 from textual.containers import Container, Horizontal, ScrollableContainer
+from textual.worker import Worker, get_current_worker
 from textual.reactive import reactive
 from rich.style import Style
 from rich.text import Text
@@ -302,8 +304,6 @@ class ParamMenu(Static):
             self.app.query_one("#logs", Pretty).update, client.sessions.list
         )
         all_sessions = client.sessions.list
-        self.app.call_from_thread(self.app.query_one(Tile5).set_active_tab, "shell_tab")
-        self.app.call_from_thread(self.app.query_one("#shells_list", ListView).focus)
         self.app.call_from_thread(
             self.app.query_one(ShellMenu).update_shells, all_sessions
         )
@@ -351,35 +351,6 @@ class ShellMenu(Static):
             }
         return shells_info
 
-    def add_shell(
-        self, shell_id: str, tunnel_local: str, tunnel_peer: str, base_log: str = ""
-    ) -> None:
-        """Add one shell, possibility to add a base text"""
-        shellsList = self.query_one(ListView)
-        new_entry = ListItem(
-            Collapsible(
-                Input(placeholder="command"),
-                Log(),
-                title=f"Shell {shell_id}, {tunnel_local} -> {tunnel_peer}",
-            )
-        )
-        shellsList.append(new_entry)
-
-    def remove_shell(self, shell_id: str) -> None:
-        """Remove one shell from the list by it's id"""
-        shellsList = self.query_one(ListView)
-        shellsInfo = self.get_shells_info()
-
-        shellsList.clear()
-        for id, shell in shellsInfo.items():
-            if id != shell_id:
-                self.add_shell(
-                    id,
-                    shell["tunnel_local"],
-                    shell["tunnel_peer"],
-                    base_log=shell["base_log"],
-                )
-
     def update_shells(self, new_shells: dict) -> None:
         """Add and remove the shells comparing the old and new ones"""
         current_shells = self.get_shells_info()
@@ -397,14 +368,26 @@ class ShellMenu(Static):
                 }
 
         shellsList = self.query_one(ListView)
-        shellsList.clear()
+        self.workers.cancel_group(self, "shells")
+        shells = []
         for id, shell in current_shells.items():
-            self.add_shell(
-                id,
-                shell["tunnel_local"],
-                shell["tunnel_peer"],
-                base_log=shell["base_log"],
-            )
+            # Only recreate the ones that are still in the new shells, remove the others
+            if id in new_shells.keys():
+                new_log = Log().write(shell["base_log"])
+                new_collasible = Collapsible(
+                    Input(placeholder="command"),
+                    new_log,
+                    title=f"Shell {id}, {shell['tunnel_local']} -> {shell['tunnel_peer']}",
+                )
+                self.read_shell_log(
+                    STATE["client"].sessions.session(id), new_collasible, new_log
+                )
+                shells += [ListItem(new_collasible)]
+
+        shellsList.clear()
+        shellsList.extend(shells)
+        self.parent.parent.parent.active = "shell_tab"
+        shellsList.focus()
 
     @on(ListView.Highlighted)
     def open_collapse(self, event: ListView.Highlighted) -> None:
@@ -431,17 +414,25 @@ class ShellMenu(Static):
         log = collapsible.query_one(Log)
         log.write_line(f"$ {cmd}")
         id = label.split(" ")[1].split(",")[0]
+        self.write_shell(id, cmd)
+
+    @work(thread=True)
+    def write_shell(self, id: str, cmd: str) -> None:
         client: MsfRpcClient = STATE["client"]
         shell: ShellSession = client.sessions.session(id)
         shell.write(cmd)
-        self.update_shell_log(shell, log)
 
-    @work(thread=True)
-    def update_shell_log(self, shell: ShellSession, log: Log) -> None:
-        s = shell.read()
-        while not s:
-            s = shell.read()
-        self.app.call_from_thread(log.write_line, s)
+    @work(thread=True, group="shells")
+    def read_shell_log(
+        self, shell: ShellSession, collaspible: Collapsible, log: Log
+    ) -> None:
+        worker = get_current_worker()
+        while not worker.is_cancelled:
+            if not collaspible.collapsed:
+                s = shell.read()
+                if s:
+                    self.app.call_from_thread(log.write_line, s)
+            sleep(0.1)
 
 
 class Tile5(Static):
@@ -487,7 +478,7 @@ class Pwnguin(App):
 
     @work(exclusive=True, thread=True)
     def init_app(self):
-        client = autopwn.runMetasploit(reinit=True, show=False)
+        client = autopwn.runMetasploit(reinit=True, show=False, wait=False)
         STATE["client"] = client
         self.app.call_from_thread(self.end_init)
 
