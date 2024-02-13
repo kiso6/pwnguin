@@ -30,6 +30,7 @@ from textual.widgets import (
     Pretty,
     Button,
     Log,
+    Collapsible,
 )
 from textual.widget import Widget
 from textual import work, on, log
@@ -330,23 +331,7 @@ class ShellMenu(Static):
 
     def compose(self) -> ComposeResult:
         with ScrollableContainer(id="shells_container"):
-            yield ListView(
-                ListItem(
-                    Container(
-                        Label(f"Shell {5}, {555} -> {5555}"),
-                        Input(placeholder="command"),
-                        Log().write("haha"),
-                    )
-                ),
-                ListItem(
-                    Container(
-                        Label(f"Shell {6}, {666} -> {6666}"),
-                        Input(placeholder="command"),
-                        Log().write("bbb"),
-                    )
-                ),
-                id="shells_list",
-            )
+            yield ListView(id="shells_list")
 
     def on_mount(self) -> None:
         self.children[0].can_focus = False
@@ -357,7 +342,7 @@ class ShellMenu(Static):
         children = shellsList.children
         shells_info = {}
         for child in children:
-            label_str = str(child.query_one(Label).renderable)
+            label_str = child.query_one(Collapsible).title
             id = label_str.split(" ")[1].split(",")[0]
             shells_info[id] = {
                 "tunnel_local": label_str.split(", ")[1].split(" ")[0],
@@ -372,10 +357,10 @@ class ShellMenu(Static):
         """Add one shell, possibility to add a base text"""
         shellsList = self.query_one(ListView)
         new_entry = ListItem(
-            Container(
-                Label(f"Shell {shell_id}, {tunnel_local} -> {tunnel_peer}"),
+            Collapsible(
                 Input(placeholder="command"),
-                Log().write(base_log),
+                Log(),
+                title=f"Shell {shell_id}, {tunnel_local} -> {tunnel_peer}",
             )
         )
         shellsList.append(new_entry)
@@ -421,8 +406,18 @@ class ShellMenu(Static):
                 base_log=shell["base_log"],
             )
 
+    @on(ListView.Highlighted)
+    def open_collapse(self, event: ListView.Highlighted) -> None:
+        if event.item is None:
+            return
+        for listItem in self.query_one(ListView).children:
+            listItem.query_one(Collapsible).collapsed = True
+        event.item.query_one(Collapsible).collapsed = False
+        event.item.query_one(Input).focus()
+
     @on(ListView.Selected)
-    def select(self, event: ListView.Selected) -> None:
+    def select_collapse(self, event: ListView.Selected) -> None:
+        event.item.query_one(Collapsible).collapsed = False
         event.item.query_one(Input).focus()
 
     # TODO change read primitive, read in a while true loop per shell instead of one thread per command ?
@@ -431,12 +426,11 @@ class ShellMenu(Static):
         """Execute one command in the shell, read the output, show it in the log"""
         cmd = event.input.value
         event.input.value = ""
-        container = event.input.parent
-        label = container.query_one(Label)
-        label_str = str(label.renderable)
-        log = container.query_one(Log)
+        collapsible: Collapsible = event.input.parent.parent
+        label = collapsible.title
+        log = collapsible.query_one(Log)
         log.write_line(f"$ {cmd}")
-        id = label_str.split(" ")[1].split(",")[0]
+        id = label.split(" ")[1].split(",")[0]
         client: MsfRpcClient = STATE["client"]
         shell: ShellSession = client.sessions.session(id)
         shell.write(cmd)
