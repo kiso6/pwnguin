@@ -6,3 +6,5 @@
 **/logtest
 .vscode
 /modules/edb/*
+/modules/post/hosts
+/modules/post/ips
