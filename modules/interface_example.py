@@ -1,6 +1,8 @@
 import re
 import subprocess
 import json
+
+from textual.events import Mount
 import autopwn as autopwn
 from pymetasploit3.msfrpc import (
     MsfRpcClient,
@@ -280,7 +282,7 @@ class ParamMenu(Static):
         for list_item in self.query_one(ListView).children:
             param_name = str(list_item.query_one(Label).renderable)
             param_value = list_item.query_one(Input).value
-            if param_name in STATE["exploit_ms"].missing_required:
+            if param_name in STATE["exploit_ms"].options:
                 STATE["exploit_ms"][param_name] = param_value
             else:
                 STATE["payload_ms"][param_name] = param_value
@@ -302,10 +304,7 @@ class ParamMenu(Static):
         self.app.call_from_thread(self.app.query_one(Tile5).set_active_tab, "shell_tab")
         self.app.call_from_thread(self.app.query_one("#shells_list", ListView).focus)
         self.app.call_from_thread(
-            self.app.query_one(ShellMenu).add_shell,
-            "1",
-            all_sessions["1"]["tunnel_local"],
-            all_sessions["1"]["tunnel_peer"],
+            self.app.query_one(ShellMenu).update_shells, all_sessions
         )
 
     def param_item_widget(self, name: str, placeholder) -> ListItem:
@@ -331,27 +330,105 @@ class ShellMenu(Static):
 
     def compose(self) -> ComposeResult:
         with ScrollableContainer(id="shells_container"):
-            yield ListView(id="shells_list")
+            yield ListView(
+                ListItem(
+                    Container(
+                        Label(f"Shell {5}, {555} -> {5555}"),
+                        Input(placeholder="command"),
+                        Log().write("haha"),
+                    )
+                ),
+                ListItem(
+                    Container(
+                        Label(f"Shell {6}, {666} -> {6666}"),
+                        Input(placeholder="command"),
+                        Log().write("bbb"),
+                    )
+                ),
+                id="shells_list",
+            )
 
-    def add_shell(self, shell_id: str, tunnel_local: str, tunnel_peer: str) -> None:
+    def on_mount(self) -> None:
+        self.children[0].can_focus = False
+
+    def get_shells_info(self) -> dict:
+        """get the info from the shells"""
         shellsList = self.query_one(ListView)
+        children = shellsList.children
+        shells_info = {}
+        for child in children:
+            label_str = str(child.query_one(Label).renderable)
+            id = label_str.split(" ")[1].split(",")[0]
+            shells_info[id] = {
+                "tunnel_local": label_str.split(", ")[1].split(" ")[0],
+                "tunnel_peer": label_str.split("-> ")[1],
+                "base_log": "\n".join(child.query_one(Log).lines),
+            }
+        return shells_info
 
-        shellsList.append(
-            ListItem(
-                Container(
-                    Label(f"Shell {shell_id}, {tunnel_local} -> {tunnel_peer}"),
-                    Input(placeholder="command"),
-                    Log(),
-                )
+    def add_shell(
+        self, shell_id: str, tunnel_local: str, tunnel_peer: str, base_log: str = ""
+    ) -> None:
+        """Add one shell, possibility to add a base text"""
+        shellsList = self.query_one(ListView)
+        new_entry = ListItem(
+            Container(
+                Label(f"Shell {shell_id}, {tunnel_local} -> {tunnel_peer}"),
+                Input(placeholder="command"),
+                Log().write(base_log),
             )
         )
+        shellsList.append(new_entry)
+
+    def remove_shell(self, shell_id: str) -> None:
+        """Remove one shell from the list by it's id"""
+        shellsList = self.query_one(ListView)
+        shellsInfo = self.get_shells_info()
+
+        shellsList.clear()
+        for id, shell in shellsInfo.items():
+            if id != shell_id:
+                self.add_shell(
+                    id,
+                    shell["tunnel_local"],
+                    shell["tunnel_peer"],
+                    base_log=shell["base_log"],
+                )
+
+    def update_shells(self, new_shells: dict) -> None:
+        """Add and remove the shells comparing the old and new ones"""
+        current_shells = self.get_shells_info()
+        # Remove shells that do not exist anymore
+        current_shells = {
+            id: shell for id, shell in current_shells.items() if id in new_shells.keys()
+        }
+        # Add new shells
+        for new_id, new_shell in new_shells.items():
+            if new_id not in current_shells.keys():
+                current_shells[new_id] = {
+                    "tunnel_local": new_shell["tunnel_local"],
+                    "tunnel_peer": new_shell["tunnel_peer"],
+                    "base_log": "",
+                }
+
+        shellsList = self.query_one(ListView)
+        shellsList.clear()
+        for id, shell in current_shells.items():
+            self.add_shell(
+                id,
+                shell["tunnel_local"],
+                shell["tunnel_peer"],
+                base_log=shell["base_log"],
+            )
 
     @on(ListView.Selected)
     def select(self, event: ListView.Selected) -> None:
         event.item.query_one(Input).focus()
 
+    # TODO change read primitive, read in a while true loop per shell instead of one thread per command ?
     @on(Input.Submitted)
     def exec(self, event: Input.Submitted) -> None:
+        """Execute one command in the shell, read the output, show it in the log"""
         cmd = event.input.value
         event.input.value = ""
         container = event.input.parent
@@ -363,13 +440,13 @@ class ShellMenu(Static):
         client: MsfRpcClient = STATE["client"]
         shell: ShellSession = client.sessions.session(id)
         shell.write(cmd)
-        self.update_shell(shell, log)
+        self.update_shell_log(shell, log)
 
-    @work(exclusive=True, thread=True)
-    def update_shell(self, shell, log):
+    @work(thread=True)
+    def update_shell_log(self, shell: ShellSession, log: Log) -> None:
         s = shell.read()
         while not s:
-            pass
+            s = shell.read()
         self.app.call_from_thread(log.write_line, s)
 
 
