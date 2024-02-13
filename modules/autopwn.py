@@ -216,7 +216,10 @@ def exploitVuln(client=None, modlist=[]) -> None:
     print("[~] Available payloads :")
     pprint.pprint(plds)
     print("[-1 for autochosing]")
-    pay_idx = int(input("Which payload do you want to use ? :"))
+    if (auto_mode == 1) :
+        pay_idx = -1
+    else : 
+        pay_idx = int(input("Which payload do you want to use ? :"))
 
     print("")
     if pay_idx == -1:
@@ -377,7 +380,7 @@ if __name__ == "__main__":
         IP = sys.argv[1]
 
     (shell, client, srv) = autopwn(
-        generic_exploit=True, get_edb_exploits=True, com_and_cont=False, auto_mode=False
+        Rhost,Lhost,generic_exploit=True, get_edb_exploits=True, com_and_cont=True, auto_mode=False
     )
 
     sequence = [
