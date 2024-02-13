@@ -106,6 +106,12 @@ def getEdbExploit(res=[]):
                 #    print(command)
                 subprocess.run(command, shell=True)
 
+def showEdbExploit(exploitPath = "")->None:
+    print("Reading ...")
+    with open(exploitPath,"r+") as f:
+        prog = f.readlines()
+    pprint.pprint(prog)
+
 
 def createExploitList(res=[]) -> tuple[list[str], list[str]]:
     """Create exploits / metasploits lists from the list of research
@@ -349,6 +355,9 @@ def autopwn(
 
 
 if __name__ == "__main__":
+
+    showEdbExploit("./edb/2444.sh")
+
     if debug == 1:
         print("**** RUNNING IN DEBUG MODE ****")
 
@@ -381,5 +390,4 @@ if __name__ == "__main__":
 
     LOG("END OF LOGS", logfile, "crit")
     logfile.close()
-
     exit(0)
