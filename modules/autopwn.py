@@ -8,6 +8,7 @@ from capstone import CS_OP_IMM
 
 from netaddr import P
 import autopayload
+import autoexploit
 from pymetasploit3.msfrpc import MsfRpcClient, ExploitModule, PayloadModule
 import time
 from logs import LOG
@@ -336,6 +337,16 @@ def autopwn(
     else:
         choice = input("[~] Please select an exploit: ")
 
+        LOG("Error 3 : No exploit found on Metasploit.", logfile, "err")
+        print("[X] Error 3 : No exploit found on Metasploit.")
+        exit(-3)
+    LOG("Displayed possible exploits to user", logfile, "log")
+    print("[-1 for autochosing]\n")
+    choice = input("[~] Please select an exploit: ")
+    if (choice == "-1") : 
+        choice = str(autoexploit.autochose(metaexploits))
+        if ( choice == "-1") :
+            choice = input("[~] Could not auto select, please select manually ")
     attack = selectExploit(choice, exploits)
 
     print("[V] Exploit selected ! :")
