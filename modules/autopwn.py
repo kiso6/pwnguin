@@ -95,22 +95,31 @@ def getEdbExploit(res=[]):
     paths = []
     if edbExploits:
         for pwn in edbExploits:
-            print(pwn)
             if not ("(Metasploit)" in pwn["Title"]):
                 paths.append(pwn["Path"])
     if paths:
         for path in paths:
             ext = str(path.split("/")[-1]).split(".")[-1]
             if not (ext in ["txt", "md"]):
-                command = "cp " + path + " ./edb/" + str(path.split("/")[-1])
-                #    print(command)
+                plat = str(path.split("/")[5])
+                if ('lin' in plat):
+                    command = "cp " + path + " ./edb/lin/" + str(path.split("/")[-1])
+                elif ('mult' in plat):
+                    command = "cp " + path + " ./edb/mult/" + str(path.split("/")[-1])
+                elif ('win' in plat):
+                    command = "cp " + path + " ./edb/win/" + str(path.split("/")[-1])
+                elif ('cgi' in plat):
+                    command = "cp " + path + " ./edb/cgi/" + str(path.split("/")[-1])
+                else:
+                    command = "cp " + path + " ./edb/oth/" + str(path.split("/")[-1])
+                #   print(command)
                 subprocess.run(command, shell=True)
+
 
 def showEdbExploit(exploitPath = "")->None:
     with open(exploitPath,"r+") as f:
         prog = f.readlines()
     pprint.pprint(prog)
-
 
 
 def createExploitList(res=[]) -> tuple[list[str], list[str]]:
@@ -356,7 +365,7 @@ def autopwn(
 
 if __name__ == "__main__":
 
-    showEdbExploit("./edb/2444.sh")
+    # showEdbExploit("./edb/2444.sh")
 
     if debug == 1:
         print("**** RUNNING IN DEBUG MODE ****")
