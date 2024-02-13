@@ -107,10 +107,10 @@ def getEdbExploit(res=[]):
                 subprocess.run(command, shell=True)
 
 def showEdbExploit(exploitPath = "")->None:
-    print("Reading ...")
     with open(exploitPath,"r+") as f:
         prog = f.readlines()
     pprint.pprint(prog)
+
 
 
 def createExploitList(res=[]) -> tuple[list[str], list[str]]:
