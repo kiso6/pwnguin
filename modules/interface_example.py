@@ -1,6 +1,7 @@
 import re
 import subprocess
 from time import sleep
+from pathlib import Path
 
 import autopwn as autopwn
 from pymetasploit3.msfrpc import (
@@ -28,7 +29,9 @@ from textual.widgets import (
     Button,
     Log,
     Collapsible,
+    TextArea,
 )
+from textual.widgets.tree import TreeNode
 from textual import work, on, log
 from textual.color import Color
 from textual.containers import Container, Horizontal, ScrollableContainer
@@ -179,9 +182,10 @@ class Tile3(Static):
 class Tile4(Static):
 
     tree: Tree = None
+    connected: TreeNode = None
 
     def compose(self) -> ComposeResult:
-        tree: Tree[dict] = Tree("0.0.0.0/0")
+        tree: Tree[dict] = Tree("all/")
         self.tree = tree
         tree.root.expand()
         yield tree
@@ -195,6 +199,26 @@ class Tile4(Static):
             network_node = self.tree.root.add(network, expand=True)
             for host in networks[network]:
                 network_node.add_leaf(host)
+
+    @on(Tree.NodeSelected)
+    def on_tree_selected(self, event: Tree.NodeSelected) -> None:
+        node = event.node
+        # check if network or computer
+        if "/" in str(node.label):
+            return
+        if self.connected == node:
+            # disconnect/return to localhost
+            self.connected.set_label(str(self.connected.label)[1:])
+            self.connected = None
+        elif self.connected != None:
+            # connect from previous to next
+            self.connected.set_label(str(self.connected.label)[1:])
+            node.set_label("*" + str(node.label))
+            self.connected = node
+        else:
+            # connect from local to remote
+            node.set_label("*" + str(node.label))
+            self.connected = node
 
 
 class VulnChoice(Static):
@@ -450,6 +474,9 @@ class Tile5(Static):
                 yield ParamMenu()
             with TabPane("Shells", id="shell_tab"):
                 yield ShellMenu()
+            with TabPane("file", id="file_tab"):
+                TEXT = Path(__file__).read_text()
+                yield TextArea.code_editor(TEXT, language="python")
 
     def on_mount(self) -> None:
         self.border_title = "Exploitation"

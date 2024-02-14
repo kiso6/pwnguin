@@ -2,5 +2,6 @@ pip install pandas
 pip install python-nmap
 pip install pymetasploit3
 pip install textual
+pip install "textual[syntax]" 
 pip install capstone
 pip install netaddr
