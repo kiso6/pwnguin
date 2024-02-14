@@ -8,3 +8,4 @@
 /modules/edb/*
 /modules/post/hosts
 /modules/post/ips
+**/hosts

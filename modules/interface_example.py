@@ -1,9 +1,7 @@
 import re
 import subprocess
-import json
 from time import sleep
 
-from textual.events import Mount
 import autopwn as autopwn
 from pymetasploit3.msfrpc import (
     MsfRpcClient,
@@ -11,7 +9,7 @@ from pymetasploit3.msfrpc import (
     PayloadModule,
     ShellSession,
 )
-
+import post.postexploit as postexploit
 
 from textual.app import App, ComposeResult
 from textual.widgets import (
@@ -25,26 +23,22 @@ from textual.widgets import (
     Tree,
     TabbedContent,
     TabPane,
-    LoadingIndicator,
-    DataTable,
     OptionList,
     Pretty,
     Button,
     Log,
     Collapsible,
 )
-from textual.widget import Widget
 from textual import work, on, log
 from textual.color import Color
 from textual.containers import Container, Horizontal, ScrollableContainer
-from textual.worker import Worker, get_current_worker
-from textual.reactive import reactive
+from textual.worker import get_current_worker
 from rich.style import Style
 from rich.text import Text
 
 STATE = {
     "client": None,  # MsfRpcClient
-    "action": None,  # 0 for network scan, 1 for computer scan
+    "action": None,  # 0 for computer scan, 1 for network scan
     "IP": None,
     "vulnerabilities": None,
     "vulnerability": None,  # index of the chosen vulnerability
@@ -87,10 +81,7 @@ payloads = [
     "And finally the payloads of the choosen exploit",
 ]
 
-networks = {
-    "192.168.0.0/24": ["192.168.0.1", "192.168.0.5", "192.168.0.254"],
-    "10.0.34.0/24": ["10.0.34.11", "10.0.34.12"],
-}
+networks = {}
 
 actions = ["Scan computer", "Scan network"]
 
@@ -107,7 +98,7 @@ class Tile1(Static):
     def show_selected(self, event: OptionList.OptionHighlighted) -> None:
         input = self.parent.query_one("#command", Input)
         if event.option_index == 1:
-            input.placeholder = "Enter network with mask (default: 192.168.0.0/24)"
+            input.placeholder = "Enter network with mask (default: 192.168.1.0/24)"
         elif event.option_index == 0:
             input.placeholder = "Enter computer IP (default: 127.0.0.1)"
         STATE["action"] = event.option_index
@@ -131,33 +122,30 @@ class Tile2(Static):
         input = self.query_one(Input)
         command = input.value
         input.value = ""
-        if STATE["action"] == 1:
-            if not command:
-                command = "192.168.0.0/24"
-            if not re.compile(r"^(?:[0-9]{1,3}\.){3}[0-9]{1,3}\/[0-9]{1,2}$").match(
-                command
-            ):
-                input.placeholder = "Wrong format (default: 192.168.0.0/24)"
-                return
-            input.placeholder = "Network scan not implemented yet"
-            STATE["IP"] = command
-        elif STATE["action"] == 0:
+        if STATE["action"] == 0:
             if not command:
                 command = "127.0.0.1"
             if not re.compile(r"^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$").match(command):
                 input.placeholder = "Wrong format (default: 127.0.0.1)"
                 return
-            input.placeholder = "scan started"
-            STATE["IP"] = command
-            self.perform_scan(STATE["IP"])
+            self.perform_computer_scan(command)
+        elif STATE["action"] == 1:
+            if not command:
+                command = "192.168.1.0/24"
+            if not re.compile(r"^(?:[0-9]{1,3}\.){3}[0-9]{1,3}\/[0-9]{1,2}$").match(
+                command
+            ):
+                input.placeholder = "Wrong format (default: 192.168.1.0/24)"
+                return
+            self.perform_network_scan(command)
+        STATE["IP"] = command
+        pretty = self.parent.query_one("#logs", Pretty)
+        pretty.update("Scanning " + command)
 
     @work(exclusive=True, thread=True)
-    def perform_scan(self, IP: str) -> None:
-        pretty = self.parent.query_one("#logs", Pretty)
-        self.app.call_from_thread(pretty.update, "Scanning " + IP)
-
-        result = autopwn.scanIp4Vulnerabilities(ip=IP)
-        self.app.call_from_thread(pretty.update, result)
+    def perform_computer_scan(self, ip: str) -> None:
+        result = autopwn.scanIp4Vulnerabilities(ip=ip)
+        self.app.call_from_thread(self.parent.query_one("#logs", Pretty).update, result)
 
         (titles, metaexploits) = autopwn.createExploitList(result)
         titles = [title[1] for title in titles]
@@ -169,6 +157,13 @@ class Tile2(Static):
         tab = self.app.query_one(Tile5)
         self.app.call_from_thread(tab.set_active_tab, "vuln_tab")
         self.app.call_from_thread(vuln_list.focus)
+
+    @work(exclusive=True, thread=True)
+    def perform_network_scan(self, ip: str) -> None:
+        result = postexploit.scanNetwork(ip)
+        self.app.call_from_thread(self.parent.query_one("#logs", Pretty).update, result)
+        networks[ip] = result
+        self.app.call_from_thread(self.parent.query_one(Tile4).rebuild_tree)
 
 
 class Tile3(Static):
@@ -182,17 +177,24 @@ class Tile3(Static):
 
 
 class Tile4(Static):
+
+    tree: Tree = None
+
     def compose(self) -> ComposeResult:
         tree: Tree[dict] = Tree("0.0.0.0/0")
+        self.tree = tree
         tree.root.expand()
-        for network in networks:
-            network_node = tree.root.add(network, expand=True)
-            for host in networks[network]:
-                network_node.add_leaf(host)
         yield tree
 
     def on_mount(self) -> None:
         self.border_title = "Computers found"
+
+    def rebuild_tree(self):
+        self.tree.clear()
+        for network in networks:
+            network_node = self.tree.root.add(network, expand=True)
+            for host in networks[network]:
+                network_node.add_leaf(host)
 
 
 class VulnChoice(Static):
