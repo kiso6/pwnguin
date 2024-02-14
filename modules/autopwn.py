@@ -321,7 +321,7 @@ def autopwn(
     results = scanIp4Vulnerabilities(EXPLOIT_LIST, IP)
     (exploits, metaexploits) = createExploitList(results)
 
-    if generic_exploit & get_edb_exploits:
+    if generic_exploit and get_edb_exploits:
         getEdbExploit(results)
 
     if generic_exploit:
