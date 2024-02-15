@@ -320,6 +320,7 @@ def autopwn(
 
     results = scanIp4Vulnerabilities(EXPLOIT_LIST, IP)
     (exploits, metaexploits) = createExploitList(results)
+    client = runMetasploit(False)
 
     if generic_exploit and get_edb_exploits:
         getEdbExploit(results)
@@ -360,7 +361,7 @@ def autopwn(
         choice = input("[~] Please select an exploit: ")
 
     if choice == "-1":
-        choice = str(autoexploit.autochose(metaexploits))
+        choice = str(autoexploit.autochose(metaexploits,client))
         if choice == "-1":
             choice = input("[~] Could not auto select, please select manually ")
     attack = selectExploit(choice, exploits)
@@ -371,7 +372,7 @@ def autopwn(
     LOG("User selected " + attack, logfile, "log")
 
     print("Starting msfrpcd...")
-    client = runMetasploit(False)
+    
     modlist = searchModules(client, attack)
     exploitVuln(Rhosts, Lhost, auto_mode, client, modlist)
 
