@@ -14,6 +14,7 @@ import time
 from logs import LOG
 import post.postexploit as postexploit
 import sys
+import re
 
 RED = "\033[1;31m"
 YELLOW = "\033[33m"
@@ -39,7 +40,7 @@ LOG("Launched autopwn.", logfile, "inf")
 IP = "192.168.1.45"
 EXPLOIT_LIST = "./exploit_list"
 
-debug = 0
+debug = 1
 
 
 def show_pwnguin():
@@ -181,6 +182,7 @@ def runMetasploit(reinit=False, show=True, wait=True) -> MsfRpcClient:
 
 def searchModules(client: MsfRpcClient, attack: str) -> list[dict]:
     modules = client.modules.search(attack)
+    #modules = client.modules.search("Netgear DGN2200B")
     print("[~] Available modules :")
     for k in range(len(modules)):
         pprint.pprint(
@@ -365,7 +367,7 @@ def autopwn(
         if choice == "-1":
             choice = input("[~] Could not auto select, please select manually ")
     attack = selectExploit(choice, exploits)
-
+    attack = re.sub('[^0-9a-zA-Z]+', ' ', attack)
     print("[V] Exploit selected ! :")
     print(attack)
     print("\n")
@@ -418,7 +420,7 @@ if __name__ == "__main__":
         generic_exploit=True,
         get_edb_exploits=True,
         com_and_cont=True,
-        auto_mode=True,
+        auto_mode=False,
     )
 
     sequence = [
