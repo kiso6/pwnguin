@@ -4,7 +4,6 @@ from os import path
 import subprocess
 import pprint
 import json
-from capstone import CS_OP_IMM
 
 from netaddr import P
 import autopayload
@@ -40,7 +39,7 @@ LOG("Launched autopwn.", logfile, "inf")
 IP = "192.168.1.45"
 EXPLOIT_LIST = "./exploit_list"
 
-debug = 1
+debug = 0
 
 
 def show_pwnguin():
@@ -367,7 +366,7 @@ def autopwn(
         if choice == "-1":
             choice = input("[~] Could not auto select, please select manually ")
     attack = selectExploit(choice, exploits)
-    attack = re.sub('[^0-9a-zA-Z]+', ' ', attack)
+    attack = re.sub('[^0-9a-zA-Z]+', ' ', attack) #alphanumeric chars only 
     print("[V] Exploit selected ! :")
     print(attack)
     print("\n")

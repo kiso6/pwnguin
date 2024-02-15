@@ -1,0 +1,1 @@
+('/home/kali/Documents/GitHub/pwnguin/modules/build/autopwn/PYZ-00.pyz', [])
