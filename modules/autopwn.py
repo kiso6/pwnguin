@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
-from os import path
+import os
+import shutil
 import subprocess
 import pprint
 import json
@@ -104,17 +105,17 @@ def getEdbExploit(res=[]):
             if not (ext in ["txt", "md"]):
                 plat = str(path.split("/")[5])
                 if "lin" in plat:
-                    command = "cp " + path + " ./edb/lin/" + str(path.split("/")[-1])
+                    dest_path = "./edb/lin/" + str(path.split("/")[-1])
                 elif "mult" in plat:
-                    command = "cp " + path + " ./edb/mult/" + str(path.split("/")[-1])
+                    dest_path = "./edb/mult/" + str(path.split("/")[-1])
                 elif "win" in plat:
-                    command = "cp " + path + " ./edb/win/" + str(path.split("/")[-1])
+                    dest_path = "./edb/win/" + str(path.split("/")[-1])
                 elif "cgi" in plat:
-                    command = "cp " + path + " ./edb/cgi/" + str(path.split("/")[-1])
+                    dest_path = "./edb/cgi/" + str(path.split("/")[-1])
                 else:
-                    command = "cp " + path + " ./edb/oth/" + str(path.split("/")[-1])
-                #   print(command)
-                subprocess.run(command, shell=True)
+                    dest_path = "./edb/oth/" + str(path.split("/")[-1])
+                os.makedirs(os.path.dirname(dest_path), exist_ok=True)
+                shutil.copy(path, dest_path)
 
 
 def showEdbExploit(exploitPath="") -> None:
@@ -181,7 +182,7 @@ def runMetasploit(reinit=False, show=True, wait=True) -> MsfRpcClient:
 
 def searchModules(client: MsfRpcClient, attack: str) -> list[dict]:
     modules = client.modules.search(attack)
-    #modules = client.modules.search("Netgear DGN2200B")
+    # modules = client.modules.search("Netgear DGN2200B")
     print("[~] Available modules :")
     for k in range(len(modules)):
         pprint.pprint(
@@ -362,7 +363,7 @@ def autopwn(
         choice = input("[~] Please select an exploit: ")
 
     if choice == "-1":
-        choice = str(autoexploit.autochose(metaexploits,client))
+        choice = str(autoexploit.autochose(metaexploits, client))
         if choice == "-1":
             choice = input("[~] Could not auto select, please select manually ")
     attack = selectExploit(choice, exploits)
@@ -373,7 +374,7 @@ def autopwn(
     LOG("User selected " + attack, logfile, "log")
 
     print("Starting msfrpcd...")
-    
+
     modlist = searchModules(client, attack)
     exploitVuln(Rhosts, Lhost, auto_mode, client, modlist)
 
