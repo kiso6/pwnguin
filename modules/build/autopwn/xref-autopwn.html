@@ -192,7 +192,7 @@ imports:
 
 <div class="node">
   <a name="pyi_rth_inspect.py"></a>
-  <a target="code" href="/home/kali/.local/lib/python3.11/site-packages/PyInstaller/hooks/rthooks/pyi_rth_inspect.py" type="text/plain"><tt>pyi_rth_inspect.py</tt></a>
+  <a target="code" href="/usr/local/lib/python3.11/dist-packages/PyInstaller/hooks/rthooks/pyi_rth_inspect.py" type="text/plain"><tt>pyi_rth_inspect.py</tt></a>
 <span class="moduletype">Script</span>  <div class="import">
 imports:
     <a href="#inspect">inspect</a>
@@ -237,17 +237,6 @@ imported by:
 <span class="moduletype">MissingModule</span>  <div class="import">
 imported by:
     <a href="#platform">platform</a>
-
-  </div>
-
-</div>
-
-<div class="node">
-  <a name="'msgpack._packer'"></a>
-  <a target="code" href="" type="text/plain"><tt>'msgpack._packer'</tt></a>
-<span class="moduletype">MissingModule</span>  <div class="import">
-imported by:
-    <a href="#msgpack">msgpack</a>
 
   </div>
 
@@ -3135,7 +3124,7 @@ imported by:
  &#8226;   <a href="#inspect">inspect</a>
  &#8226;   <a href="#more_itertools.more">more_itertools.more</a>
  &#8226;   <a href="#more_itertools.recipes">more_itertools.recipes</a>
- &#8226;   <a href="#msgpack">msgpack</a>
+ &#8226;   <a href="#msgpack.ext">msgpack.ext</a>
  &#8226;   <a href="#platform">platform</a>
  &#8226;   <a href="#pprint">pprint</a>
  &#8226;   <a href="#queue">queue</a>
@@ -5361,6 +5350,8 @@ imported by:
  &#8226;   <a href="#email.utils">email.utils</a>
  &#8226;   <a href="#http.cookiejar">http.cookiejar</a>
  &#8226;   <a href="#logs">logs</a>
+ &#8226;   <a href="#msgpack.ext">msgpack.ext</a>
+ &#8226;   <a href="#msgpack.fallback">msgpack.fallback</a>
  &#8226;   <a href="#requests.models">requests.models</a>
  &#8226;   <a href="#requests.sessions">requests.sessions</a>
  &#8226;   <a href="#urllib3.connection">urllib3.connection</a>
@@ -10326,23 +10317,21 @@ imported by:
 
 <div class="node">
   <a name="msgpack"></a>
-  <a target="code" href="/home/kali/.local/lib/python3.11/site-packages/msgpack/__init__.py" type="text/plain"><tt>msgpack</tt></a>
+  <a target="code" href="/usr/local/lib/python3.11/dist-packages/msgpack/__init__.py" type="text/plain"><tt>msgpack</tt></a>
 <span class="moduletype">Package</span>  <div class="import">
 imports:
-    <a href="#'msgpack._packer'">'msgpack._packer'</a>
- &#8226;   <a href="#collections">collections</a>
- &#8226;   <a href="#msgpack._unpacker">msgpack._unpacker</a>
- &#8226;   <a href="#msgpack._version">msgpack._version</a>
+    <a href="#msgpack._cmsgpack">msgpack._cmsgpack</a>
  &#8226;   <a href="#msgpack.exceptions">msgpack.exceptions</a>
+ &#8226;   <a href="#msgpack.ext">msgpack.ext</a>
  &#8226;   <a href="#msgpack.fallback">msgpack.fallback</a>
  &#8226;   <a href="#os">os</a>
 
   </div>
   <div class="import">
 imported by:
-    <a href="#msgpack._unpacker">msgpack._unpacker</a>
- &#8226;   <a href="#msgpack._version">msgpack._version</a>
+    <a href="#msgpack._cmsgpack">msgpack._cmsgpack</a>
  &#8226;   <a href="#msgpack.exceptions">msgpack.exceptions</a>
+ &#8226;   <a href="#msgpack.ext">msgpack.ext</a>
  &#8226;   <a href="#msgpack.fallback">msgpack.fallback</a>
  &#8226;   <a href="#pymetasploit3.msfrpc">pymetasploit3.msfrpc</a>
  &#8226;   <a href="#pymetasploit3.utils">pymetasploit3.utils</a>
@@ -10352,24 +10341,8 @@ imported by:
 </div>
 
 <div class="node">
-  <a name="msgpack._unpacker"></a>
-  <tt>msgpack._unpacker</tt> <span class="moduletype"><tt>/home/kali/.local/lib/python3.11/site-packages/msgpack/_unpacker.cpython-311-x86_64-linux-gnu.so</tt></span>  <div class="import">
-imports:
-    <a href="#msgpack">msgpack</a>
-
-  </div>
-  <div class="import">
-imported by:
-    <a href="#msgpack">msgpack</a>
-
-  </div>
-
-</div>
-
-<div class="node">
-  <a name="msgpack._version"></a>
-  <a target="code" href="/home/kali/.local/lib/python3.11/site-packages/msgpack/_version.py" type="text/plain"><tt>msgpack._version</tt></a>
-<span class="moduletype">SourceModule</span>  <div class="import">
+  <a name="msgpack._cmsgpack"></a>
+  <tt>msgpack._cmsgpack</tt> <span class="moduletype"><tt>/usr/local/lib/python3.11/dist-packages/msgpack/_cmsgpack.cpython-311-x86_64-linux-gnu.so</tt></span>  <div class="import">
 imports:
     <a href="#msgpack">msgpack</a>
 
@@ -10384,7 +10357,7 @@ imported by:
 
 <div class="node">
   <a name="msgpack.exceptions"></a>
-  <a target="code" href="/home/kali/.local/lib/python3.11/site-packages/msgpack/exceptions.py" type="text/plain"><tt>msgpack.exceptions</tt></a>
+  <a target="code" href="/usr/local/lib/python3.11/dist-packages/msgpack/exceptions.py" type="text/plain"><tt>msgpack.exceptions</tt></a>
 <span class="moduletype">SourceModule</span>  <div class="import">
 imports:
     <a href="#msgpack">msgpack</a>
@@ -10400,18 +10373,39 @@ imported by:
 </div>
 
 <div class="node">
+  <a name="msgpack.ext"></a>
+  <a target="code" href="/usr/local/lib/python3.11/dist-packages/msgpack/ext.py" type="text/plain"><tt>msgpack.ext</tt></a>
+<span class="moduletype">SourceModule</span>  <div class="import">
+imports:
+    <a href="#collections">collections</a>
+ &#8226;   <a href="#datetime">datetime</a>
+ &#8226;   <a href="#msgpack">msgpack</a>
+ &#8226;   <a href="#struct">struct</a>
+
+  </div>
+  <div class="import">
+imported by:
+    <a href="#msgpack">msgpack</a>
+ &#8226;   <a href="#msgpack.fallback">msgpack.fallback</a>
+
+  </div>
+
+</div>
+
+<div class="node">
   <a name="msgpack.fallback"></a>
-  <a target="code" href="/home/kali/.local/lib/python3.11/site-packages/msgpack/fallback.py" type="text/plain"><tt>msgpack.fallback</tt></a>
+  <a target="code" href="/usr/local/lib/python3.11/dist-packages/msgpack/fallback.py" type="text/plain"><tt>msgpack.fallback</tt></a>
 <span class="moduletype">SourceModule</span>  <div class="import">
 imports:
     <a href="#'__pypy__.builders'">'__pypy__.builders'</a>
  &#8226;   <a href="#__pypy__">__pypy__</a>
+ &#8226;   <a href="#datetime">datetime</a>
  &#8226;   <a href="#io">io</a>
  &#8226;   <a href="#msgpack">msgpack</a>
  &#8226;   <a href="#msgpack.exceptions">msgpack.exceptions</a>
+ &#8226;   <a href="#msgpack.ext">msgpack.ext</a>
  &#8226;   <a href="#struct">struct</a>
  &#8226;   <a href="#sys">sys</a>
- &#8226;   <a href="#warnings">warnings</a>
 
   </div>
   <div class="import">
@@ -11409,7 +11403,7 @@ imported by:
 
 <div class="node">
   <a name="pymetasploit3"></a>
-  <a target="code" href="/home/kali/.local/lib/python3.11/site-packages/pymetasploit3/__init__.py" type="text/plain"><tt>pymetasploit3</tt></a>
+  <a target="code" href="/usr/local/lib/python3.11/dist-packages/pymetasploit3/__init__.py" type="text/plain"><tt>pymetasploit3</tt></a>
 <span class="moduletype">Package</span>  <div class="import">
 imported by:
     <a href="#pymetasploit3.msfrpc">pymetasploit3.msfrpc</a>
@@ -11421,7 +11415,7 @@ imported by:
 
 <div class="node">
   <a name="pymetasploit3.msfrpc"></a>
-  <a target="code" href="/home/kali/.local/lib/python3.11/site-packages/pymetasploit3/msfrpc.py" type="text/plain"><tt>pymetasploit3.msfrpc</tt></a>
+  <a target="code" href="/usr/local/lib/python3.11/dist-packages/pymetasploit3/msfrpc.py" type="text/plain"><tt>pymetasploit3.msfrpc</tt></a>
 <span class="moduletype">SourceModule</span>  <div class="import">
 imports:
     <a href="#'requests.packages.urllib3'">'requests.packages.urllib3'</a>
@@ -11447,7 +11441,7 @@ imported by:
 
 <div class="node">
   <a name="pymetasploit3.utils"></a>
-  <a target="code" href="/home/kali/.local/lib/python3.11/site-packages/pymetasploit3/utils.py" type="text/plain"><tt>pymetasploit3.utils</tt></a>
+  <a target="code" href="/usr/local/lib/python3.11/dist-packages/pymetasploit3/utils.py" type="text/plain"><tt>pymetasploit3.utils</tt></a>
 <span class="moduletype">SourceModule</span>  <div class="import">
 imports:
     <a href="#msgpack">msgpack</a>
@@ -12238,7 +12232,7 @@ imported by:
 
 <div class="node">
   <a name="retry"></a>
-  <a target="code" href="/home/kali/.local/lib/python3.11/site-packages/retry/__init__.py" type="text/plain"><tt>retry</tt></a>
+  <a target="code" href="/usr/local/lib/python3.11/dist-packages/retry/__init__.py" type="text/plain"><tt>retry</tt></a>
 <span class="moduletype">Package</span>  <div class="import">
 imports:
     <a href="#logging">logging</a>
@@ -12257,7 +12251,7 @@ imported by:
 
 <div class="node">
   <a name="retry.api"></a>
-  <a target="code" href="/home/kali/.local/lib/python3.11/site-packages/retry/api.py" type="text/plain"><tt>retry.api</tt></a>
+  <a target="code" href="/usr/local/lib/python3.11/dist-packages/retry/api.py" type="text/plain"><tt>retry.api</tt></a>
 <span class="moduletype">SourceModule</span>  <div class="import">
 imports:
     <a href="#functools">functools</a>
@@ -12278,7 +12272,7 @@ imported by:
 
 <div class="node">
   <a name="retry.compat"></a>
-  <a target="code" href="/home/kali/.local/lib/python3.11/site-packages/retry/compat.py" type="text/plain"><tt>retry.compat</tt></a>
+  <a target="code" href="/usr/local/lib/python3.11/dist-packages/retry/compat.py" type="text/plain"><tt>retry.compat</tt></a>
 <span class="moduletype">SourceModule</span>  <div class="import">
 imports:
     <a href="#decorator">decorator</a>
@@ -12926,6 +12920,7 @@ imported by:
     <a href="#base64">base64</a>
  &#8226;   <a href="#gettext">gettext</a>
  &#8226;   <a href="#gzip">gzip</a>
+ &#8226;   <a href="#msgpack.ext">msgpack.ext</a>
  &#8226;   <a href="#msgpack.fallback">msgpack.fallback</a>
  &#8226;   <a href="#netaddr.fbsocket">netaddr.fbsocket</a>
  &#8226;   <a href="#netaddr.strategy.eui48">netaddr.strategy.eui48</a>
@@ -14606,7 +14601,6 @@ imported by:
  &#8226;   <a href="#locale">locale</a>
  &#8226;   <a href="#logging">logging</a>
  &#8226;   <a href="#more_itertools.more">more_itertools.more</a>
- &#8226;   <a href="#msgpack.fallback">msgpack.fallback</a>
  &#8226;   <a href="#os">os</a>
  &#8226;   <a href="#pathlib">pathlib</a>
  &#8226;   <a href="#random">random</a>

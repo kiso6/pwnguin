@@ -22,7 +22,6 @@ missing module named _frozen_importlib_external - imported by importlib._bootstr
 excluded module named _frozen_importlib - imported by importlib (optional), importlib.abc (optional)
 missing module named _winapi - imported by encodings (delayed, conditional, optional), ntpath (optional), subprocess (conditional), mimetypes (optional)
 missing module named 'requests.packages.urllib3' - imported by pymetasploit3.msfrpc (top-level)
-missing module named 'msgpack._packer' - imported by msgpack (conditional, optional)
 missing module named '__pypy__.builders' - imported by msgpack.fallback (conditional, optional)
 missing module named __pypy__ - imported by msgpack.fallback (conditional)
 missing module named vms_lib - imported by platform (delayed, optional)
