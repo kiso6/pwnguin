@@ -148,12 +148,16 @@ class Tile2(Static):
     @work(exclusive=True, thread=True)
     def perform_computer_scan(self, ip: str) -> None:
         result = autopwn.scanIp4Vulnerabilities(ip=ip)
+        # copy exploits to local
+        autopwn.getEdbExploit(result, get_all=True)
         self.app.call_from_thread(self.parent.query_one("#logs", Pretty).update, result)
 
         (titles, metaexploits) = autopwn.createExploitList(result)
         titles = [title[1] for title in titles]
-        STATE["vulnerabilities"] = titles
-
+        edbExploits = []
+        for search in result:
+            edbExploits += search["RESULTS_EXPLOIT"]
+        STATE["vulnerabilities"] = edbExploits
         vuln_list = self.parent.query_one("#vuln_list", OptionList)
         self.app.call_from_thread(vuln_list.clear_options)
         self.app.call_from_thread(vuln_list.add_options, titles)
@@ -229,20 +233,28 @@ class VulnChoice(Static):
     @on(OptionList.OptionSelected)
     def select_vuln(self, event: OptionList.OptionSelected) -> None:
         STATE["vulnerability"] = event.option_index
-        modules = autopwn.searchModules(
-            STATE["client"], STATE["vulnerabilities"][event.option_index][:-12]
-        )
-        STATE["exploits"] = modules
+        vuln = STATE["vulnerabilities"][event.option_index]
+        if "Metasploit" in vuln["Title"]:
+            modules = autopwn.searchModules(STATE["client"], vuln["Title"][:-12])
+            STATE["exploits"] = modules
 
-        exploitsList = self.app.query_one("#exploit_list", OptionList)
-        exploitsList = exploitsList.clear_options()
-        exploits = [
-            Text(exploit["fullname"], style=RANK_COLORS[exploit["rank"]])
-            for exploit in modules
-        ]
-        exploitsList.add_options(exploits)
-        self.app.query_one(TabbedContent).active = "exploit_tab"
-        exploitsList.focus()
+            exploitsList = self.app.query_one("#exploit_list", OptionList)
+            exploitsList = exploitsList.clear_options()
+            exploits = [
+                Text(exploit["fullname"], style=RANK_COLORS[exploit["rank"]])
+                for exploit in modules
+            ]
+            exploitsList.add_options(exploits)
+            self.app.query_one(TabbedContent).active = "exploit_tab"
+            exploitsList.focus()
+        else:
+            file_path = autopwn.convert_path(vuln["Path"])
+            TEXT = Path(file_path).read_text()
+            textArea = self.app.query_one(TextArea)
+            textArea.clear()
+            textArea.insert(TEXT)
+            textArea.cursor_location = (0, 0)
+            self.app.query_one(TabbedContent).active = "file_tab"
 
 
 class ExploitMenu(Static):
@@ -474,12 +486,16 @@ class Tile5(Static):
                 yield ParamMenu()
             with TabPane("Shells", id="shell_tab"):
                 yield ShellMenu()
-            with TabPane("file", id="file_tab"):
-                TEXT = Path(__file__).read_text()
-                yield TextArea.code_editor(TEXT, language="python")
+            with TabPane("File", id="file_tab"):
+                yield Label(
+                    "This tab is opened when automatic exploitation is not possible",
+                    id="file_label",
+                )
+                yield TextArea.code_editor("", language="python")
 
     def on_mount(self) -> None:
         self.border_title = "Exploitation"
+        self.query_one("#file_label", Label).styles.padding = (0, 1, 1, 1)
 
     def set_active_tab(self, active: str) -> None:
         self.query_one(TabbedContent).active = active

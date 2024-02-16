@@ -89,8 +89,24 @@ def scanIp4Vulnerabilities(exploit_path=EXPLOIT_LIST, ip=IP):
     return result
 
 
+def convert_path(path: str) -> str:
+    """Convert edb exploit path to local path"""
+    plat = str(path.split("/")[5])
+    if "lin" in plat:
+        dest_path = "./edb/lin/" + str(path.split("/")[-1])
+    elif "mult" in plat:
+        dest_path = "./edb/mult/" + str(path.split("/")[-1])
+    elif "win" in plat:
+        dest_path = "./edb/win/" + str(path.split("/")[-1])
+    elif "cgi" in plat:
+        dest_path = "./edb/cgi/" + str(path.split("/")[-1])
+    else:
+        dest_path = "./edb/oth/" + str(path.split("/")[-1])
+    return dest_path
+
+
 # TODO Définir une liste d'extensions dépréciées pour les exploit récupérés sur edb.
-def getEdbExploit(res=[]):
+def getEdbExploit(res=[], get_all=False):
     """Retrieve EDB exploits that are missing in metasploit"""
     edbExploits = []
     for search in res:
@@ -103,18 +119,8 @@ def getEdbExploit(res=[]):
     if paths:
         for path in paths:
             ext = str(path.split("/")[-1]).split(".")[-1]
-            if not (ext in ["txt", "md"]):
-                plat = str(path.split("/")[5])
-                if "lin" in plat:
-                    dest_path = "./edb/lin/" + str(path.split("/")[-1])
-                elif "mult" in plat:
-                    dest_path = "./edb/mult/" + str(path.split("/")[-1])
-                elif "win" in plat:
-                    dest_path = "./edb/win/" + str(path.split("/")[-1])
-                elif "cgi" in plat:
-                    dest_path = "./edb/cgi/" + str(path.split("/")[-1])
-                else:
-                    dest_path = "./edb/oth/" + str(path.split("/")[-1])
+            if get_all or not (ext in ["txt", "md"]):
+                dest_path = convert_path(path)
                 os.makedirs(os.path.dirname(dest_path), exist_ok=True)
                 shutil.copy(path, dest_path)
 
