@@ -42,7 +42,7 @@ IP = "192.168.1.45"
 EXPLOIT_LIST = "./exploit_list"
 
 debug = 0
-
+scan_http = 1
 
 def show_pwnguin():
     """Displays pwngin ASCII art logo, nothing useful"""
@@ -335,7 +335,11 @@ def autopwn(
 ) -> tuple[None, MsfRpcClient, str]:
     """Autopwn function."""
     show_pwnguin()
-
+    if (scan_http) : 
+        subprocess.run("python3 ./Photon/photon.py -u " + Rhosts + " --keys ; echo",shell=True)
+        #subprocess.run("cat " + Rhosts + "/*",shell=True)
+        subprocess.run("for file in " + Rhosts + "/* ; do echo $file; cat $file; echo; done",shell=True)
+        exit(1)
     results = scanIp4Vulnerabilities(EXPLOIT_LIST, IP)
     (exploits, metaexploits) = createExploitList(results)
     client = runMetasploit(False)
