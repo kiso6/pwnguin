@@ -33,6 +33,6 @@ def getSshCredsAndConn(ulist="",plist="",domain=""):
             break
     return (retUsr,retPass)
 
-usr,pwd = getSshCredsAndConn(ulist="./init/userlist",plist="./init/passlist",domain="192.168.1.45")
+# usr,pwd = getSshCredsAndConn(ulist="./init/userlist",plist="./init/passlist",domain="192.168.1.45")
 
-print(f"user = {usr} | password={pwd}")
+# print(f"user = {usr} | password={pwd}")
