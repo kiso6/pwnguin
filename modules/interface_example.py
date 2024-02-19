@@ -152,11 +152,9 @@ class Tile2(Static):
         autopwn.getEdbExploit(result, get_all=True)
         self.app.call_from_thread(self.parent.query_one("#logs", Pretty).update, result)
 
-        (titles, metaexploits) = autopwn.createExploitList(result)
+        (edbExploits, titles, metaexploits) = autopwn.createExploitList(result)
         titles = [title[1] for title in titles]
-        edbExploits = []
-        for search in result:
-            edbExploits += search["RESULTS_EXPLOIT"]
+
         STATE["vulnerabilities"] = edbExploits
         vuln_list = self.parent.query_one("#vuln_list", OptionList)
         self.app.call_from_thread(vuln_list.clear_options)
