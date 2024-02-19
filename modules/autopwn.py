@@ -188,14 +188,21 @@ def runMetasploit(reinit=False, show=True, wait=True) -> MsfRpcClient:
 
 
 def searchModules(client: MsfRpcClient, attack: str) -> list[dict]:
-    modules = client.modules.search(attack)
-    # modules = client.modules.search("Netgear DGN2200B")
+    attack_cpy = attack
+    modules = []
+    while (len(attack_cpy) > 10 and modules == []) :
+        modules = client.modules.search(attack_cpy)
+        attack_cpy = attack_cpy[:-3]
     print("[~] Available modules :")
     for k in range(len(modules)):
         pprint.pprint(
             str(k) + " : " + modules[k]["type"] + " : " + modules[k]["fullname"]
         )
     LOG("Displayed modules", logfile, "log")
+    if modules == []:
+        LOG("Error 8 : Module error.", logfile, "err")
+        print("[X] Error 8 : Module error, no module.")
+        exit(-8)
     return modules
 
 
@@ -221,10 +228,6 @@ def exploitVuln(
     modlist=[],
 ) -> None:
     """Execute selected payload on the targeted"""
-    if modlist == []:
-        LOG("Error 8 : Module error.", logfile, "err")
-        print("[X] Error 8 : Module error, no module.")
-        exit(-8)
     exploit = client.modules.use(modlist[0]["type"], modlist[0]["fullname"])
     print("[V] Selected payloads: ", exploit.info)
 
@@ -380,7 +383,7 @@ def autopwn(
         if choice == "-1":
             choice = input("[~] Could not auto select, please select manually ")
     attack = selectExploit(choice, exploits)
-    attack = re.sub("[^0-9a-zA-Z]+", " ", attack)
+    attack = re.sub("[^0-9a-zA-Z./()]+", " ", attack)
     print("[V] Exploit selected ! :")
     print(attack)
     print("\n")
