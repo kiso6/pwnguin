@@ -223,6 +223,33 @@ class Tile4(Static):
             self.connected = node
 
 
+class ConnectionsInfos(Static):
+
+    log: Log = None
+
+    def compose(self) -> ComposeResult:
+        self.log = Log()
+        with Container():
+            yield self.log
+
+    def on_mount(self) -> None:
+        self.scan()
+
+    @work(exclusive=True, thread=True)
+    def scan(self):
+        s = "Interfaces found :\n - "
+        interfaces = postexploit.getTargetConnections()
+        s += "\n - ".join(interfaces) + "\n..."
+        self.app.call_from_thread(self.log.write, s)
+        s = s[:-3] + "\n"
+        arp = postexploit.getKnownARP()
+        s += "ARP table :\n"
+        for a in arp:
+            s += f" - {a['ip']} <-> {a['mac']} : {a['iface']} \n"
+        self.app.call_from_thread(self.log.clear)
+        self.app.call_from_thread(self.log.write, s)
+
+
 class VulnChoice(Static):
     def compose(self) -> ComposeResult:
         with Container():
@@ -474,6 +501,8 @@ class ShellMenu(Static):
 class Tile5(Static):
     def compose(self) -> ComposeResult:
         with TabbedContent():
+            with TabPane("Connections", id="connect_tab"):
+                yield ConnectionsInfos()
             with TabPane("Vulnerabilities", id="vuln_tab"):
                 yield VulnChoice()
             with TabPane("Exploit Menu", id="exploit_tab"):
