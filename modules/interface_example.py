@@ -30,6 +30,7 @@ from textual.widgets import (
     Log,
     Collapsible,
     TextArea,
+    Markdown,
 )
 from textual.widgets.tree import TreeNode
 from textual import work, on, log
@@ -152,11 +153,9 @@ class Tile2(Static):
         autopwn.getEdbExploit(result, get_all=True)
         self.app.call_from_thread(self.parent.query_one("#logs", Pretty).update, result)
 
-        (titles, metaexploits) = autopwn.createExploitList(result)
+        (edbExploits, titles, metaexploits) = autopwn.createExploitList(result)
         titles = [title[1] for title in titles]
-        edbExploits = []
-        for search in result:
-            edbExploits += search["RESULTS_EXPLOIT"]
+
         STATE["vulnerabilities"] = edbExploits
         vuln_list = self.parent.query_one("#vuln_list", OptionList)
         self.app.call_from_thread(vuln_list.clear_options)
@@ -223,6 +222,37 @@ class Tile4(Static):
             # connect from local to remote
             node.set_label("*" + str(node.label))
             self.connected = node
+
+
+class ComputerInfos(Static):
+
+    mark: Markdown = None
+
+    def compose(self) -> ComposeResult:
+        self.mark = Markdown("")
+        with ScrollableContainer():
+            yield self.mark
+
+    def on_mount(self) -> None:
+        self.scan()
+
+    @work(exclusive=True, thread=True)
+    def scan(self):
+        s = "##### Machine distribution\n"
+        s += f"{postexploit.getOS()}\n\n"
+        s += "##### Interfaces"
+        interfaces = postexploit.getTargetConnections()
+        for inter in interfaces:
+            s += "\n - " + inter[0] + ": " + inter[1]
+        s += "\n\n..."
+        self.app.call_from_thread(self.mark.update, s)
+        s = s[:-3]
+        arp = postexploit.getKnownARP()
+        s += "##### ARP Table\n"
+        s += "|IP|MAC|Interface|\n|-|-|-|\n"
+        for a in arp:
+            s += f"|{a['ip']}|{a['mac']}|{a['iface']}|\n"
+        self.app.call_from_thread(self.mark.update, s)
 
 
 class VulnChoice(Static):
@@ -476,6 +506,8 @@ class ShellMenu(Static):
 class Tile5(Static):
     def compose(self) -> ComposeResult:
         with TabbedContent():
+            with TabPane("Connections", id="connect_tab"):
+                yield ComputerInfos()
             with TabPane("Vulnerabilities", id="vuln_tab"):
                 yield VulnChoice()
             with TabPane("Exploit Menu", id="exploit_tab"):

