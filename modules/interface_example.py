@@ -239,8 +239,8 @@ class ComputerInfos(Static):
     @work(exclusive=True, thread=True)
     def scan(self):
         s = "##### Machine distribution\n"
-        s += f"{postexploit.getOS()}\n\n"
-        s += "##### Interfaces"
+        s += postexploit.getOS()
+        s += "\n\n##### Interfaces"
         interfaces = postexploit.getTargetConnections()
         for inter in interfaces:
             s += "\n - " + inter[0] + ": " + inter[1]
