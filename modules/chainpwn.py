@@ -5,7 +5,7 @@ import post.postexploit as pexp
 
 
 def chainpwn() -> int:
-    connections = pexp.getTargetConnections()
+    connections = [network[1] for network in pexp.getTargetConnections()]
     print(f"@IP found for current target : {connections}")
     netlist = pexp.machine_to_rzo(ip_list=connections)
     for net in netlist:

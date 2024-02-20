@@ -30,6 +30,7 @@ from textual.widgets import (
     Log,
     Collapsible,
     TextArea,
+    Markdown,
 )
 from textual.widgets.tree import TreeNode
 from textual import work, on, log
@@ -223,31 +224,35 @@ class Tile4(Static):
             self.connected = node
 
 
-class ConnectionsInfos(Static):
+class ComputerInfos(Static):
 
-    log: Log = None
+    mark: Markdown = None
 
     def compose(self) -> ComposeResult:
-        self.log = Log()
-        with Container():
-            yield self.log
+        self.mark = Markdown("")
+        with ScrollableContainer():
+            yield self.mark
 
     def on_mount(self) -> None:
         self.scan()
 
     @work(exclusive=True, thread=True)
     def scan(self):
-        s = "Interfaces found :\n - "
+        s = "##### Machine distribution\n"
+        s += f"{postexploit.getOS()}\n\n"
+        s += "##### Interfaces"
         interfaces = postexploit.getTargetConnections()
-        s += "\n - ".join(interfaces) + "\n..."
-        self.app.call_from_thread(self.log.write, s)
-        s = s[:-3] + "\n"
+        for inter in interfaces:
+            s += "\n - " + inter[0] + ": " + inter[1]
+        s += "\n\n..."
+        self.app.call_from_thread(self.mark.update, s)
+        s = s[:-3]
         arp = postexploit.getKnownARP()
-        s += "ARP table :\n"
+        s += "##### ARP Table\n"
+        s += "|IP|MAC|Interface|\n|-|-|-|\n"
         for a in arp:
-            s += f" - {a['ip']} <-> {a['mac']} : {a['iface']} \n"
-        self.app.call_from_thread(self.log.clear)
-        self.app.call_from_thread(self.log.write, s)
+            s += f"|{a['ip']}|{a['mac']}|{a['iface']}|\n"
+        self.app.call_from_thread(self.mark.update, s)
 
 
 class VulnChoice(Static):
@@ -502,7 +507,7 @@ class Tile5(Static):
     def compose(self) -> ComposeResult:
         with TabbedContent():
             with TabPane("Connections", id="connect_tab"):
-                yield ConnectionsInfos()
+                yield ComputerInfos()
             with TabPane("Vulnerabilities", id="vuln_tab"):
                 yield VulnChoice()
             with TabPane("Exploit Menu", id="exploit_tab"):
