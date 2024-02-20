@@ -88,7 +88,7 @@ def scanIp4Vulnerabilities(exploit_path=EXPLOIT_LIST, ip=IP):
 
 def convert_path(path: str) -> str:
     """Convert edb exploit path to local path"""
-    plat = str(path.split("/")[5])
+    plat = str(path.split("/")[4])
     if "lin" in plat:
         dest_path = "./edb/lin/" + str(path.split("/")[-1])
     elif "mult" in plat:
