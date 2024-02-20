@@ -1,0 +1,2 @@
+pymetasploit3==1.0.5
+paramiko==2.12.0

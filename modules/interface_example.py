@@ -555,7 +555,7 @@ class Pwnguin(App):
 
     @work(exclusive=True, thread=True)
     def init_app(self):
-        client = autopwn.runMetasploit(reinit=True, show=False, wait=False)
+        client = autopwn.runMetasploit(reinit=True, show=False, wait=True)
         STATE["client"] = client
         self.app.call_from_thread(self.end_init)
 

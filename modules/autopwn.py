@@ -5,9 +5,6 @@ import shutil
 import subprocess
 import pprint
 import json
-from capstone import CS_OP_IMM
-
-from netaddr import P
 import autopayload
 import autoexploit
 from pymetasploit3.msfrpc import MsfRpcClient, ExploitModule, PayloadModule
