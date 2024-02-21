@@ -66,7 +66,9 @@ def show_pwnguin():
             """
     )
 
-# TODO : Changer le exit par une exception 
+
+# TODO : Changer le exit par une exception
+# TODO : Couper scanIp4Vulnerabilities en 2 fonctions, scanIp4Vulnerabilities et parseExploitList
 def scanIp4Vulnerabilities(exploit_path=EXPLOIT_LIST, ip=IP):
     """Scans IP loofing for vulnerabilities and output the
     related exploit list to be parsed (in json)

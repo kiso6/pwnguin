@@ -105,7 +105,7 @@ class Tile1(Static):
         if event.option_index == 1:
             input.placeholder = "Enter network with mask (default: 192.168.1.0/24)"
         elif event.option_index == 0:
-            input.placeholder = "Enter computer IP (default: 127.0.0.1)"
+            input.placeholder = "Enter computer IP with mask (default: 127.0.0.1/8)"
         STATE["action"] = event.option_index
 
     @on(OptionList.OptionSelected)
@@ -129,9 +129,11 @@ class Tile2(Static):
         input.value = ""
         if STATE["action"] == 0:
             if not command:
-                command = "127.0.0.1"
-            if not re.compile(r"^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$").match(command):
-                input.placeholder = "Wrong format (default: 127.0.0.1)"
+                command = "127.0.0.1/8"
+            if not re.compile(r"^(?:[0-9]{1,3}\.){3}[0-9]{1,3}\/[0-9]{1,2}$").match(
+                command
+            ):
+                input.placeholder = "Wrong format (default: 127.0.0.1/8)"
                 return
             self.perform_computer_scan(command)
         elif STATE["action"] == 1:
@@ -144,13 +146,26 @@ class Tile2(Static):
                 return
             self.perform_network_scan(command)
         STATE["IP"] = command
+        input.placeholder = "let's go !"
         pretty = self.parent.query_one("#logs", Pretty)
         pretty.update("Scanning " + command)
 
     @work(exclusive=True, thread=True)
     def perform_computer_scan(self, ip: str) -> None:
-        result = autopwn.scanIp4Vulnerabilities(ip=ip)
-        # copy exploits to local
+        result = autopwn.scanIp4Vulnerabilities(ip=ip.split("/")[0])
+        if "0 hosts up" in Path("./detect.xml").read_text():
+            self.app.call_from_thread(
+                self.parent.query_one("#logs", Pretty).update, "The host doesn't exist"
+            )
+            return
+        else:
+            network = postexploit.machine_to_rzo([ip])[0]
+            if network not in networks:
+                networks[network] = []
+            if ip not in networks[network]:
+                networks[network].append(ip.split("/")[0])
+            self.app.call_from_thread(self.parent.query_one(Tile4).rebuild_tree)
+
         autopwn.getEdbExploit(result, get_all=True)
         self.app.call_from_thread(self.parent.query_one("#logs", Pretty).update, result)
 
@@ -272,7 +287,7 @@ class ComputerInfos(Static):
         s += os
         s += "\n\n##### Interfaces"
         for inter in interfaces:
-            s += "\n - " + " ".join(inter)
+            s += f"\n - {inter[0]}: {inter[1]}"
         s += "\n\n"
         s += "##### ARP Table\n"
         s += "|IP|MAC|Interface|\n|-|-|-|\n"
@@ -397,7 +412,7 @@ class ParamMenu(Static):
         new_sessions = client.sessions.list
         self.app.call_from_thread(
             self.app.query_one("#logs", Pretty).update,
-            str(new_sessions) + "\nUpgrading shell to meterpreter...",
+            str(new_sessions) + " Upgrading shell to meterpreter...",
         )
         new_sess_id = [
             element for element in new_sessions if element not in STATE["sessions"]
@@ -405,7 +420,7 @@ class ParamMenu(Static):
         STATE["sessions"] = new_sessions
         if new_sessions[new_sess_id]["type"] == "shell":
             shell = client.sessions.session(new_sess_id)
-            shell.upgrade(lhost="0.0.0.0", lport="0000")
+            shell.upgrade(lhost="0.0.0.0", lport="5678")
             shell.stop()
             new_sessions = client.sessions.list
 
@@ -599,7 +614,7 @@ class Pwnguin(App):
 
     @work(exclusive=True, thread=True)
     def init_app(self):
-        client = autopwn.runMetasploit(reinit=True, show=False, wait=True)
+        client = autopwn.runMetasploit(reinit=True, show=False, wait=False)
         STATE["client"] = client
         self.app.call_from_thread(self.end_init)
 
