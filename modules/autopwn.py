@@ -292,7 +292,7 @@ def exploitVuln(
         exit(-9)
 
 
-def getShell(client=None, id="1"):
+def getShell(client: MsfRpcClient = None, id="1"):
     """Get shell from ID session"""
     LOG("Shell obtained", logfile, "log")
     try:
@@ -454,7 +454,7 @@ if __name__ == "__main__":
     subprocess.run("./makesshkeys.sh", shell=True)
     print("[V] SSH setup done")
     LOG("Begin sending sequences", logfile, "log")
-    sendCommands(shell, sequences.getsequence(3,srv))
+    sendCommands(shell, sequences.getsequence(3, srv))
     LOG("Sequences sent", logfile, "log")
     LOG("END OF LOGS", logfile, "crit")
     logfile.close()

@@ -52,6 +52,7 @@ STATE = {
     "payloads": None,
     "payload": None,  # index of the chosen payload
     "payload_ms": None,  # Metasploit payload object
+    "READ": True,  # boolean to stop the reading of the shells
 }
 
 RANK_COLORS = {
@@ -211,15 +212,18 @@ class Tile4(Static):
             return
         if self.connected == node:
             # disconnect/return to localhost
+            self.app.query_one(ComputerInfos).scan()
             self.connected.set_label(str(self.connected.label)[1:])
             self.connected = None
         elif self.connected != None:
             # connect from previous to next
+            self.app.query_one(ComputerInfos).scan(str(node.label))
             self.connected.set_label(str(self.connected.label)[1:])
             node.set_label("*" + str(node.label))
             self.connected = node
         else:
             # connect from local to remote
+            self.app.query_one(ComputerInfos).scan(str(node.label))
             node.set_label("*" + str(node.label))
             self.connected = node
 
@@ -237,17 +241,38 @@ class ComputerInfos(Static):
         self.scan()
 
     @work(exclusive=True, thread=True)
-    def scan(self):
-        s = "##### Machine distribution\n"
-        s += postexploit.getOS()
+    def scan(self, IP: str = None):
+        shell_id = None
+        if not IP:
+            # infos machine locale
+            os = postexploit.getOS()
+            interfaces = postexploit.getTargetConnections()
+            arp = postexploit.getKnownARP()
+        else:
+            # récupérer la session de la machine distante si elle existe
+            for id, session in STATE["client"].sessions.list.items():
+                if IP in session["tunnel_peer"]:
+                    shell_id = id
+            if shell_id:
+                shell = autopwn.getShell(STATE["client"], shell_id)
+                os = postexploit.getOS(shell=shell)
+                interfaces = postexploit.getTargetConnections(shell=shell)
+                arp = postexploit.getKnownARP(shell=shell)
+            else:
+                os = ""
+                interfaces = []
+                arp = []
+        s = ""
+        if shell_id:
+            s += "connected: yes\n"
+        elif IP:
+            s += "connected: no\n"
+        s += "##### Machine distribution\n"
+        s += os
         s += "\n\n##### Interfaces"
-        interfaces = postexploit.getTargetConnections()
         for inter in interfaces:
-            s += "\n - " + inter[0] + ": " + inter[1]
-        s += "\n\n..."
-        self.app.call_from_thread(self.mark.update, s)
-        s = s[:-3]
-        arp = postexploit.getKnownARP()
+            s += "\n - " + " ".join(inter)
+        s += "\n\n"
         s += "##### ARP Table\n"
         s += "|IP|MAC|Interface|\n|-|-|-|\n"
         for a in arp:
@@ -496,7 +521,7 @@ class ShellMenu(Static):
     ) -> None:
         worker = get_current_worker()
         while not worker.is_cancelled:
-            if not collaspible.collapsed:
+            if not collaspible.collapsed and STATE["READ"]:
                 s = shell.read()
                 if s:
                     self.app.call_from_thread(log.write_line, s)
@@ -532,6 +557,13 @@ class Tile5(Static):
     def set_active_tab(self, active: str) -> None:
         self.query_one(TabbedContent).active = active
 
+    @on(TabbedContent.TabActivated)
+    def on_tab_activated(self, event: TabbedContent.TabActivated) -> None:
+        if self.query_one(TabbedContent).active == "shell_tab":
+            STATE["READ"] = True
+        else:
+            STATE["READ"] = False
+
 
 class Pwnguin(App):
     BINDINGS = [
@@ -555,7 +587,7 @@ class Pwnguin(App):
 
     @work(exclusive=True, thread=True)
     def init_app(self):
-        client = autopwn.runMetasploit(reinit=True, show=False, wait=True)
+        client = autopwn.runMetasploit(reinit=True, show=False, wait=False)
         STATE["client"] = client
         self.app.call_from_thread(self.end_init)
 
