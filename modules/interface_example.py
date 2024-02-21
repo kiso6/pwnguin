@@ -52,7 +52,7 @@ STATE = {
     "payloads": None,
     "payload": None,  # index of the chosen payload
     "payload_ms": None,  # Metasploit payload object
-    "READ": True,  # boolean to stop the reading of the shells
+    "sessions": {},  # dict of shell sessions
 }
 
 RANK_COLORS = {
@@ -206,6 +206,7 @@ class Tile4(Static):
 
     @on(Tree.NodeSelected)
     def on_tree_selected(self, event: Tree.NodeSelected) -> None:
+        self.app.query_one(TabbedContent).active = "computer_tab"
         node = event.node
         # check if network or computer
         if "/" in str(node.label):
@@ -393,12 +394,23 @@ class ParamMenu(Static):
         exploit.execute(payload=payload)
         while len(client.jobs.list) != 0:
             pass
+        new_sessions = client.sessions.list
         self.app.call_from_thread(
-            self.app.query_one("#logs", Pretty).update, client.sessions.list
+            self.app.query_one("#logs", Pretty).update,
+            str(new_sessions) + "\nUpgrading shell to meterpreter...",
         )
-        all_sessions = client.sessions.list
+        new_sess_id = [
+            element for element in new_sessions if element not in STATE["sessions"]
+        ][0]
+        STATE["sessions"] = new_sessions
+        if new_sessions[new_sess_id]["type"] == "shell":
+            shell = client.sessions.session(new_sess_id)
+            shell.upgrade(lhost="0.0.0.0", lport="0000")
+            shell.stop()
+            new_sessions = client.sessions.list
+
         self.app.call_from_thread(
-            self.app.query_one(ShellMenu).update_shells, all_sessions
+            self.app.query_one(ShellMenu).update_shells, new_sessions
         )
 
     def param_item_widget(self, name: str, placeholder) -> ListItem:
@@ -473,7 +485,10 @@ class ShellMenu(Static):
                     title=f"Shell {id}, {shell['tunnel_local']} -> {shell['tunnel_peer']}",
                 )
                 self.read_shell_log(
-                    STATE["client"].sessions.session(id), new_collasible, new_log
+                    STATE["client"].sessions.session(id),
+                    new_collasible,
+                    new_log,
+                    self.parent.parent.parent,
                 )
                 shells += [ListItem(new_collasible)]
 
@@ -517,11 +532,15 @@ class ShellMenu(Static):
 
     @work(thread=True, group="shells")
     def read_shell_log(
-        self, shell: ShellSession, collaspible: Collapsible, log: Log
+        self,
+        shell: ShellSession,
+        collaspible: Collapsible,
+        log: Log,
+        tabbed: TabbedContent,
     ) -> None:
         worker = get_current_worker()
         while not worker.is_cancelled:
-            if not collaspible.collapsed and STATE["READ"]:
+            if not collaspible.collapsed and tabbed.active == "shell_tab":
                 s = shell.read()
                 if s:
                     self.app.call_from_thread(log.write_line, s)
@@ -531,7 +550,7 @@ class ShellMenu(Static):
 class Tile5(Static):
     def compose(self) -> ComposeResult:
         with TabbedContent():
-            with TabPane("Connections", id="connect_tab"):
+            with TabPane("Connections", id="computer_tab"):
                 yield ComputerInfos()
             with TabPane("Vulnerabilities", id="vuln_tab"):
                 yield VulnChoice()
@@ -556,13 +575,6 @@ class Tile5(Static):
 
     def set_active_tab(self, active: str) -> None:
         self.query_one(TabbedContent).active = active
-
-    @on(TabbedContent.TabActivated)
-    def on_tab_activated(self, event: TabbedContent.TabActivated) -> None:
-        if self.query_one(TabbedContent).active == "shell_tab":
-            STATE["READ"] = True
-        else:
-            STATE["READ"] = False
 
 
 class Pwnguin(App):
