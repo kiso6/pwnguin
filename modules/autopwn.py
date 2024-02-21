@@ -66,7 +66,7 @@ def show_pwnguin():
             """
     )
 
-
+# TODO : Changer le exit par une exception 
 def scanIp4Vulnerabilities(exploit_path=EXPLOIT_LIST, ip=IP):
     """Scans IP loofing for vulnerabilities and output the
     related exploit list to be parsed (in json)
@@ -81,6 +81,7 @@ def scanIp4Vulnerabilities(exploit_path=EXPLOIT_LIST, ip=IP):
         else:
             LOG("Error 1 : nmap failed.", logfile, "err")
             print("[X] Error 1 : nmap failed.")
+            # raise Exception("HostIsDownorNoService")
             exit(-1)
     with open(exploit_path, "r+") as f:
         result = json.loads(f.read())

