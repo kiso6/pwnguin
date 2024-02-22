@@ -8,7 +8,7 @@ from autopwn import flushProcesses
 import sequences as s
 from logs import LOG
 
-LOGFILE = open("./run/LOGS","r+")
+LOGFILE = open("./run/LOGS","a+")
 
 def processList(inp="") -> list:
     """Function that process lists txts in lists."""
