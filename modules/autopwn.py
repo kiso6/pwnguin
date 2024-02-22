@@ -90,12 +90,12 @@ def scanIp4Vulnerabilities(exploit_path=EXPLOIT_LIST, ip=IP):
         else:
             LOG("Error 1 : nmap failed.", logfile, "err")
             print("[X] Error 1 : nmap failed.")
-            exit(-1)
+            return[]
         cmd = "./explook.sh " >> /dev/null"
         msg = "Retrieving exploits"
         print("[i] Retrieving exploits")
         LOG(msg, logfile, "log")
-            return []
+        scan = subprocess.run(cmd, shell=True)
     with open(exploit_path, "r+") as f:
         result = json.loads(f.read())
     return result
