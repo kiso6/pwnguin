@@ -162,7 +162,7 @@ def createExploitList(res=[]) -> tuple[list[str], list[str]]:
     else:
         LOG("Error 2 : Parsing error or no exploits.", LOGFILE, "err")
         print("[X] Error 2 : Parsing error or no exploits.")
-        return []
+        return ([],[],[])
     LOG("Parsed ./exploit_list", LOGFILE, "log")
     metaexploits = []
     for j in range(len(titles)):
