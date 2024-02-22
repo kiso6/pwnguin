@@ -2,7 +2,7 @@
   layout: grid;
   grid-size: 4 3;
   grid-rows: 5 3fr 3fr;
-  grid-columns: 25 2fr 2fr 2fr;
+  grid-columns: 27 2fr 2fr 2fr;
   grid-gutter: 1;
   padding: 1 1;
 }

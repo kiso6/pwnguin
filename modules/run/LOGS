@@ -32,3 +32,11 @@
 [~] LOG [2024-02-22 15:03:52.321573] : Begin sending sequences
 [~] LOG [2024-02-22 15:04:18.348499] : Sequences sent
 [!] CRT [2024-02-22 15:04:18.348541] : END OF LOGS
+[i] INF [2024-02-22 15:56:06.221367] : Launched autopwn.
+[i] INF [2024-02-22 15:56:21.931872] : Launched autopwn.
+[i] INF [2024-02-22 15:56:55.472107] : Launched autopwn.
+[i] INF [2024-02-22 15:56:56.957968] : Started process msfrpcd
+[i] INF [2024-02-22 15:57:06.745270] : Started process msfdb (arg reinit)
+[i] INF [2024-02-22 15:57:08.692914] : Launched autopwn.
+[i] INF [2024-02-22 15:57:15.248246] : Started process msfrpcd
+[i] INF [2024-02-22 15:57:21.205861] : Started process msfdb (arg reinit)

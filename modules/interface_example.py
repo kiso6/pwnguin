@@ -172,6 +172,7 @@ class Tile2(Static):
         (edbExploits, titles, metaexploits) = autopwn.createExploitList(result)
         titles = [title[1] for title in titles]
 
+        STATE["computers"][ip].vulnerabilities = edbExploits
         STATE["vulnerabilities"] = edbExploits
         vuln_list = self.parent.query_one("#vuln_list", OptionList)
         self.app.call_from_thread(vuln_list.clear_options)
@@ -231,24 +232,22 @@ class Tile4(Static):
             return
         if self.connected == node:
             # disconnect/return to localhost
-            self.app.query_one(ComputerInfos).scan()
+            ip = None
             self.connected.set_label(str(self.connected.label)[1:])
             self.connected = None
         elif self.connected != None:
             # connect from previous to next
-            self.app.query_one(ComputerInfos).scan(
-                str(node.label) + "/" + str(node.parent.label).split("/")[1]
-            )
+            ip = str(node.label) + "/" + str(node.parent.label).split("/")[1]
             self.connected.set_label(str(self.connected.label)[1:])
             node.set_label("*" + str(node.label))
             self.connected = node
         else:
             # connect from local to remote
-            self.app.query_one(ComputerInfos).scan(
-                str(node.label) + "/" + str(node.parent.label).split("/")[1]
-            )
+            ip = str(node.label) + "/" + str(node.parent.label).split("/")[1]
             node.set_label("*" + str(node.label))
             self.connected = node
+        self.app.query_one(ComputerInfos).scan(ip)
+        STATE["IP"] = ip
 
 
 class ComputerInfos(Static):
@@ -267,7 +266,7 @@ class ComputerInfos(Static):
     def scan(self, IP: str | None = None):
         shell_id = None
         computer = Computer()
-        if not IP:
+        if not IP or IP in map(lambda x: x[1], postexploit.getTargetConnections()):
             # infos machine locale
             computer.os = postexploit.getOS()
             for inter in postexploit.getTargetConnections():
@@ -293,7 +292,7 @@ class ComputerInfos(Static):
         s = ""
         if shell_id:
             s += "connected: yes\n"
-        elif IP:
+        elif IP and IP not in map(lambda x: x[1], postexploit.getTargetConnections()):
             s += "connected: no - backup infos\n"
         s += "##### Machine distribution\n"
         s += computer.os
@@ -392,6 +391,9 @@ class ParamMenu(Static):
                 id="params_list",
             )
             yield Button.success("Attack !")
+            yield Static(
+                "Warning: the attack is launch from the interface selected on the left"
+            )
 
     @on(ListView.Selected)
     def select(self, event: ListView.Selected) -> None:
@@ -628,6 +630,9 @@ class Pwnguin(App):
         # load save
         loaded = computer.load()
         STATE["computers"] = loaded
+        # add local interfaces
+        for inter in postexploit.getTargetConnections():
+            STATE["computers"][inter[1]] = STATE["computers"].get(inter[1], Computer())
         self.app.call_from_thread(self.query_one(Tile4).rebuild_tree)
         # start metasploit
         client = autopwn.runMetasploit(reinit=True, show=False, wait=False)
