@@ -72,16 +72,23 @@ def scanIp4Vulnerabilities(exploit_path=EXPLOIT_LIST, ip=IP):
     related exploit list to be parsed (in json)
     """
     if debug == 0:
-        cmd = "./explookup.sh " + ip + " >> /dev/null"
+        cmd = "./nmap.sh " + ip + " >> /dev/null"
+        msg = "Launching scan over @" + ip + " cmd :" + cmd
+        print("[i] Launching scan over @" + ip + " cmd :" + cmd)
+        LOG(msg, logfile, "log")
         scan = subprocess.run(cmd, shell=True)
         if scan:
-            msg = "Launching scan over @" + ip + " cmd :" + cmd
-            print("[i] Launching scan over @" + ip + " cmd :" + cmd)
+            msg = "Scan over successfully"
+            print("[V] Scan over successfully")
             LOG(msg, logfile, "log")
         else:
             LOG("Error 1 : nmap failed.", logfile, "err")
             print("[X] Error 1 : nmap failed.")
             exit(-1)
+        cmd = "./explook.sh " >> /dev/null"
+        msg = "Retrieving exploits"
+        print("[i] Retrieving exploits")
+        LOG(msg, logfile, "log")
     with open(exploit_path, "r+") as f:
         result = json.loads(f.read())
     return result
