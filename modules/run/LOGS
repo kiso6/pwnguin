@@ -1,0 +1,34 @@
+[~] LOG [2024-02-22 15:02:09.668538] : Bruteforcing user/password for 192.168.1.45
+[~] LOG [2024-02-22 15:02:09.668555] : Processing wordlist for input : ./init/userlist
+[~] LOG [2024-02-22 15:02:09.668625] : Processing wordlist for input : ./init/passlist
+[i] INF [2024-02-22 15:02:09.639952] : Launched autopwn.
+[i] INF [2024-02-22 15:02:23.367519] : Launched autopwn.
+[~] LOG [2024-02-22 15:02:23.394915] : Launching scan over @192.168.1.45 cmd :./nmap.sh 192.168.1.45 >> /dev/null
+[~] LOG [2024-02-22 15:03:26.235846] : Scan over successfully
+[~] LOG [2024-02-22 15:03:26.235869] : Retrieving exploits
+[~] LOG [2024-02-22 15:03:34.630186] : Vulnerabilities scanned
+[~] LOG [2024-02-22 15:03:34.630210] : Imported exploit_list
+[~] LOG [2024-02-22 15:03:34.631967] : Parsed ./exploit_list
+[i] INF [2024-02-22 15:03:40.686309] : Started process msfrpcd
+[~] LOG [2024-02-22 15:03:41.084393] : Retrieving EDB exploits...
+[~] LOG [2024-02-22 15:03:41.307296] : EDB exploits retrieved
+[~] LOG [2024-02-22 15:03:41.310950] : Displayed all possible exploits to user
+[~] LOG [2024-02-22 15:03:41.311400] : Displayed possible Metasploit exploits to user
+[~] LOG [2024-02-22 15:03:41.311430] : Using auto select mode for chosing exploits
+[~] LOG [2024-02-22 15:03:41.443213] : Exploit select : vsftpd 2.3.4 Backdoor Command Execution 
+[~] LOG [2024-02-22 15:03:41.443241] : Looking for best modules...
+[~] LOG [2024-02-22 15:03:41.596546] : Displayed modules
+[~] LOG [2024-02-22 15:03:41.596560] : Modules retrieved
+[~] LOG [2024-02-22 15:03:41.728158] : Displaying exploit options
+[~] LOG [2024-02-22 15:03:41.852312] : Displaying payload options
+[~] LOG [2024-02-22 15:03:41.974465] : Auto chosing payload
+[~] LOG [2024-02-22 15:03:42.114188] : Payload auto selected
+[~] LOG [2024-02-22 15:03:42.114224] : Payload and exploit options set
+[~] LOG [2024-02-22 15:03:52.103670] : Shell obtained
+[~] LOG [2024-02-22 15:03:52.202469] : Shell Created
+[i] INF [2024-02-22 15:03:52.202498] : Entered in C&C section
+[~] LOG [2024-02-22 15:03:52.203371] : Pwn Complete 
+[~] LOG [2024-02-22 15:03:52.203551] : Begin setup for SSH persistence
+[~] LOG [2024-02-22 15:03:52.321573] : Begin sending sequences
+[~] LOG [2024-02-22 15:04:18.348499] : Sequences sent
+[!] CRT [2024-02-22 15:04:18.348541] : END OF LOGS
