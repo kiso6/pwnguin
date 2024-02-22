@@ -222,7 +222,6 @@ def searchModules(client: MsfRpcClient, attack: str) -> list[dict]:
     return modules
 
 
-# TODO couper exploitVuln en 3 fonctions select exploit, select payload et exploitVuln
 def selectExploitMS(
     client: MsfRpcClient, exploit_fullname: str
 ) -> tuple[ExploitModule, list[str]]:
