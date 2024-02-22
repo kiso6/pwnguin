@@ -48,8 +48,12 @@ def save(computers: dict[str, Computer], file_location: str = "./save.json"):
 
 
 def load(file_location: str = "./save.json") -> dict[str, Computer]:
-    with open(file_location, "r") as f:
-        data = json.loads(f.read())
+    data = {}
+    try:
+        with open(file_location, "r") as f:
+            data = json.loads(f.read())
+    except Exception as e:
+        pass
     return {ip: Computer.fromJSON(computer_json) for ip, computer_json in data.items()}
 
 
