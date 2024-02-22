@@ -330,7 +330,7 @@ def flushProcesses() -> int:
     proc = subprocess.run(
         "kill $(ps aux | grep 'msfrpcd' | awk '{print $2}')", shell=True
     )
-    # print(proc)
+    # print(proc)
     proc = subprocess.run(
         "kill $(ps aux | grep 'python3 -m http.server' | awk '{print $2}')", shell=True
     )
@@ -449,7 +449,7 @@ if __name__ == "__main__":
         if len(sys.argv) > 2:
             Lhost = sys.argv[2]
 
-    try : 
+    try:
         (shell, client, srv) = autopwn(
             Rhosts=Rhosts,
             Lhost=Lhost,
