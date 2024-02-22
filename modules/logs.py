@@ -13,13 +13,13 @@ def LOG(msg="Nothing to write", FD=None, crit="log"):
     if FD:
         match (crit):
             case "inf":
-                FD.write("[i] INFO [" + str(datetime.now()) + "] : " + msg + "\n")
+                FD.write("[i] INF [" + str(datetime.now()) + "] : " + msg + "\n")
             case "log":
                 FD.write("[~] LOG [" + str(datetime.now()) + "] : " + msg + "\n")
             case "crit":
-                FD.write("[*] CRITICAL [" + str(datetime.now()) + "] : " + msg + "\n")
+                FD.write("[!] CRT [" + str(datetime.now()) + "] : " + msg + "\n")
             case "err":
-                FD.write("[X] ERROR [" + str(datetime.now()) + "] : " + msg + "\n")
+                FD.write("[X] ERR [" + str(datetime.now()) + "] : " + msg + "\n")
     else:
         print("Error 100 : Log file close, cannot log.")
         exit(-100)

