@@ -4,13 +4,14 @@ from time import sleep
 from pathlib import Path
 
 import autopwn as autopwn
+import post.postexploit as postexploit
+import computer as computer
 from pymetasploit3.msfrpc import (
     MsfRpcClient,
     ExploitModule,
     PayloadModule,
     ShellSession,
 )
-import post.postexploit as postexploit
 
 from textual.app import App, ComposeResult
 from textual.widgets import (
@@ -53,6 +54,7 @@ STATE = {
     "payload": None,  # index of the chosen payload
     "payload_ms": None,  # Metasploit payload object
     "sessions": {},  # dict of shell sessions
+    "computers": {},
 }
 
 RANK_COLORS = {
@@ -526,7 +528,6 @@ class ShellMenu(Static):
         event.item.query_one(Collapsible).collapsed = False
         event.item.query_one(Input).focus()
 
-    # TODO change read primitive, read in a while true loop per shell instead of one thread per command ?
     @on(Input.Submitted)
     def exec(self, event: Input.Submitted) -> None:
         """Execute one command in the shell, read the output, show it in the log"""

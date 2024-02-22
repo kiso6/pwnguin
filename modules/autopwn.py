@@ -90,8 +90,8 @@ def scanIp4Vulnerabilities(exploit_path=EXPLOIT_LIST, ip=IP):
         else:
             LOG("Error 1 : nmap failed.", logfile, "err")
             print("[X] Error 1 : nmap failed.")
-            return[]
-        cmd = "./explook.sh " >> /dev/null"
+            return []
+        cmd = "./explook.sh >> /dev/null"
         msg = "Retrieving exploits"
         print("[i] Retrieving exploits")
         LOG(msg, logfile, "log")
@@ -222,7 +222,6 @@ def searchModules(client: MsfRpcClient, attack: str) -> list[dict]:
     return modules
 
 
-# TODO couper exploitVuln en 3 fonctions select exploit, select payload et exploitVuln
 def selectExploitMS(
     client: MsfRpcClient, exploit_fullname: str
 ) -> tuple[ExploitModule, list[str]]:

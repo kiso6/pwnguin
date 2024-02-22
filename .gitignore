@@ -9,3 +9,4 @@
 /modules/post/hosts
 /modules/post/ips
 **/hosts
+**/save.json
