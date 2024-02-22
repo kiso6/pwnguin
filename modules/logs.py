@@ -3,6 +3,12 @@
 
 from datetime import datetime
 
+GREEN = "\033[0;32m"
+YELLOW = "\033[33m"
+RED = "\033[1;31m"
+RESET = "\033[0;0m"
+BOLD = "\033[;1m"
+
 
 def LOG(msg="Nothing to write", FD=None, crit="log"):
     """Functions to log with different criticality levels
@@ -13,14 +19,15 @@ def LOG(msg="Nothing to write", FD=None, crit="log"):
     if FD:
         match (crit):
             case "inf":
-                FD.write("[i] INF [" + str(datetime.now()) + "] : " + msg + "\n")
+                FD.write(f"{GREEN}[i] INF [{str(datetime.now())}] : {msg}\n")
             case "log":
-                FD.write("[~] LOG [" + str(datetime.now()) + "] : " + msg + "\n")
+                FD.write(f"[~] LOG [{str(datetime.now())}] : {msg}\n")
             case "crit":
-                FD.write("[!] CRT [" + str(datetime.now()) + "] : " + msg + "\n")
+                FD.write(f"{YELLOW}[!] CRT [{str(datetime.now())}] : {msg}\n")
             case "err":
-                FD.write("[X] ERR [" + str(datetime.now()) + "] : " + msg + "\n")
+                FD.write(f"{RED}[X] ERR [{str(datetime.now())}] : {msg}\n")
     else:
         print("Error 100 : Log file close, cannot log.")
         exit(-100)
+    FD.write(f"{RESET}")
 

