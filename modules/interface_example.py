@@ -2,10 +2,12 @@ import re
 import subprocess
 from time import sleep
 from pathlib import Path
+import ipaddress
 
 import autopwn as autopwn
 import post.postexploit as postexploit
 import computer as computer
+from computer import Computer
 from pymetasploit3.msfrpc import (
     MsfRpcClient,
     ExploitModule,
@@ -55,6 +57,7 @@ STATE = {
     "payload_ms": None,  # Metasploit payload object
     "sessions": {},  # dict of shell sessions
     "computers": {},
+    "networks": {},
 }
 
 RANK_COLORS = {
@@ -88,15 +91,11 @@ payloads = [
     "And finally the payloads of the choosen exploit",
 ]
 
-networks = {}
-
-actions = ["Scan computer", "Scan network"]
-
 
 class Tile1(Static):
 
     def compose(self) -> ComposeResult:
-        yield OptionList(*actions)
+        yield OptionList("Scan computer", "Scan network")
 
     def on_mount(self) -> None:
         self.border_title = "Action Type"
@@ -125,7 +124,7 @@ class Tile2(Static):
         self.border_title = "Input"
 
     @on(Input.Submitted)
-    def scan(self, text: str) -> None:
+    def scan(self) -> None:
         input = self.query_one(Input)
         command = input.value
         input.value = ""
@@ -146,6 +145,8 @@ class Tile2(Static):
             ):
                 input.placeholder = "Wrong format (default: 192.168.1.0/24)"
                 return
+            # assure that the IP is a network ip
+            command = str(ipaddress.ip_network(command, strict=False))
             self.perform_network_scan(command)
         STATE["IP"] = command
         input.placeholder = "let's go !"
@@ -161,11 +162,8 @@ class Tile2(Static):
             )
             return
         else:
-            network = postexploit.machine_to_rzo([ip])[0]
-            if network not in networks:
-                networks[network] = []
-            if ip not in networks[network]:
-                networks[network].append(ip.split("/")[0])
+            if ip not in STATE["computers"]:
+                STATE["computers"][ip] = Computer()
             self.app.call_from_thread(self.parent.query_one(Tile4).rebuild_tree)
 
         autopwn.getEdbExploit(result, get_all=True)
@@ -184,9 +182,12 @@ class Tile2(Static):
 
     @work(exclusive=True, thread=True)
     def perform_network_scan(self, ip: str) -> None:
+        mask = ip.split("/")[1]
         result = postexploit.scanNetwork(ip)
         self.app.call_from_thread(self.parent.query_one("#logs", Pretty).update, result)
-        networks[ip] = result
+        for ip in result:
+            if ip not in STATE["computers"]:
+                STATE["computers"][ip + "/" + mask] = Computer()
         self.app.call_from_thread(self.parent.query_one(Tile4).rebuild_tree)
 
 
@@ -194,7 +195,6 @@ class Tile3(Static):
 
     def compose(self) -> ComposeResult:
         yield Pretty("Nothing for now", id="logs")
-        # yield LoadingIndicator()
 
     def on_mount(self) -> None:
         self.border_title = "What is happening ?"
@@ -215,6 +215,7 @@ class Tile4(Static):
         self.border_title = "Computers found"
 
     def rebuild_tree(self):
+        networks = computer.computers_to_network(STATE["computers"])
         self.tree.clear()
         for network in networks:
             network_node = self.tree.root.add(network, expand=True)
@@ -235,13 +236,17 @@ class Tile4(Static):
             self.connected = None
         elif self.connected != None:
             # connect from previous to next
-            self.app.query_one(ComputerInfos).scan(str(node.label))
+            self.app.query_one(ComputerInfos).scan(
+                str(node.label) + "/" + str(node.parent.label).split("/")[1]
+            )
             self.connected.set_label(str(self.connected.label)[1:])
             node.set_label("*" + str(node.label))
             self.connected = node
         else:
             # connect from local to remote
-            self.app.query_one(ComputerInfos).scan(str(node.label))
+            self.app.query_one(ComputerInfos).scan(
+                str(node.label) + "/" + str(node.parent.label).split("/")[1]
+            )
             node.set_label("*" + str(node.label))
             self.connected = node
 
@@ -259,42 +264,47 @@ class ComputerInfos(Static):
         self.scan()
 
     @work(exclusive=True, thread=True)
-    def scan(self, IP: str = None):
+    def scan(self, IP: str | None = None):
         shell_id = None
+        computer = Computer()
         if not IP:
             # infos machine locale
-            os = postexploit.getOS()
-            interfaces = postexploit.getTargetConnections()
-            arp = postexploit.getKnownARP()
+            computer.os = postexploit.getOS()
+            for inter in postexploit.getTargetConnections():
+                computer.add_network(inter[0], inter[1])
+            for entry in postexploit.getKnownARP():
+                computer.add_arp_entry(entry["ip"], entry["mac"], entry["iface"])
         else:
+            ip_no_mask = IP.split("/")[0]
             # récupérer la session de la machine distante si elle existe
             for id, session in STATE["client"].sessions.list.items():
-                if IP in session["tunnel_peer"]:
+                if ip_no_mask in session["tunnel_peer"]:
                     shell_id = id
             if shell_id:
                 shell = autopwn.getShell(STATE["client"], shell_id)
-                os = postexploit.getOS(shell=shell)
-                interfaces = postexploit.getTargetConnections(shell=shell)
-                arp = postexploit.getKnownARP(shell=shell)
+                computer.os = postexploit.getOS(shell=shell)
+                for inter in postexploit.getTargetConnections(shell=shell):
+                    computer.add_network(inter[0], inter[1])
+                for entry in postexploit.getKnownARP(shell=shell):
+                    computer.add_arp_entry(entry["ip"], entry["mac"], entry["iface"])
             else:
-                os = ""
-                interfaces = []
-                arp = []
+                # Récupérer depuis la backup
+                computer = STATE["computers"].get(IP, computer)
         s = ""
         if shell_id:
             s += "connected: yes\n"
         elif IP:
-            s += "connected: no\n"
+            s += "connected: no - backup infos\n"
         s += "##### Machine distribution\n"
-        s += os
+        s += computer.os
         s += "\n\n##### Interfaces"
-        for inter in interfaces:
-            s += f"\n - {inter[0]}: {inter[1]}"
+        for inter in computer.networks:
+            s += f"\n - {inter['iface']}: {inter['network']}"
         s += "\n\n"
         s += "##### ARP Table\n"
         s += "|IP|MAC|Interface|\n|-|-|-|\n"
-        for a in arp:
-            s += f"|{a['ip']}|{a['mac']}|{a['iface']}|\n"
+        for a in computer.arp:
+            s += f"|{a['IP']}|{a['MAC']}|{a['iface']}|\n"
         self.app.call_from_thread(self.mark.update, s)
 
 
@@ -609,12 +619,17 @@ class Pwnguin(App):
             yield Tile5(classes="tile", id="tile5")
         yield Footer()
 
-    def on_mount(self) -> None:
+    def on_ready(self) -> None:
         self.sub_title = "starting msfconsole..."
         self.init_app()
 
     @work(exclusive=True, thread=True)
     def init_app(self):
+        # load save
+        loaded = computer.load()
+        STATE["computers"] = loaded
+        self.app.call_from_thread(self.query_one(Tile4).rebuild_tree)
+        # start metasploit
         client = autopwn.runMetasploit(reinit=True, show=False, wait=False)
         STATE["client"] = client
         self.app.call_from_thread(self.end_init)
@@ -626,4 +641,5 @@ class Pwnguin(App):
 if __name__ == "__main__":
     app = Pwnguin()
     app.run()
+    computer.save(STATE["computers"])
     subprocess.run("kill $(ps aux | grep 'msfrpcd' | awk '{print $2}')", shell=True)
