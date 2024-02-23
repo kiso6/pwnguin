@@ -68,7 +68,7 @@ RANK_COLORS = {
     "manual": "white",
 }
 
-exploits = [
+default_exploits = [
     [
         "exploit/osx/local/setuid_tunnelblick",
         "excellent",
@@ -81,8 +81,8 @@ exploits = [
     ],
 ]
 
-payloads = [
-    "And finally the payloads of the choosen exploit",
+default_payloads = [
+    "And finally the payloads available for the choosen exploit",
 ]
 
 
@@ -348,7 +348,7 @@ class ExploitMenu(Static):
     def compose(self) -> ComposeResult:
         options = [
             Text(exploit[2], Style(color=Color.parse(RANK_COLORS[exploit[1]]).hex))
-            for exploit in exploits
+            for exploit in default_exploits
         ]
         with Container():
             with Horizontal(classes="horizontal"):
@@ -376,7 +376,7 @@ class ExploitMenu(Static):
 class PayloadMenu(Static):
     def compose(self) -> ComposeResult:
         with Container():
-            yield OptionList(*payloads, id="payload_list")
+            yield OptionList(*default_payloads, id="payload_list")
 
     @on(OptionList.OptionSelected)
     def select_payload(self, event: OptionList.OptionSelected) -> None:
