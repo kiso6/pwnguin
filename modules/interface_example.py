@@ -47,8 +47,6 @@ STATE = {
     "client": None,  # MsfRpcClient
     "action": None,  # 0 for computer scan, 1 for network scan
     "IP": None,
-    "vulnerabilities": None,
-    "vulnerability": None,  # index of the chosen vulnerability
     "exploits": None,
     "exploit": None,  # index of the chosen exploit
     "exploit_ms": None,  # Metasploit exploit object
@@ -69,10 +67,6 @@ RANK_COLORS = {
     "low": "grey",
     "manual": "white",
 }
-
-vulnerabilities = [
-    "Here are the vulns after being found",
-]
 
 exploits = [
     [
@@ -156,7 +150,7 @@ class Tile2(Static):
     @work(exclusive=True, thread=True)
     def perform_computer_scan(self, ip: str) -> None:
         result = autopwn.scanIp4Vulnerabilities(ip=ip.split("/")[0])
-        if "0 hosts up" in Path("./detect.xml").read_text():
+        if "0 hosts up" in Path("./run/detect.xml").read_text():
             self.app.call_from_thread(
                 self.parent.query_one("#logs", Pretty).update, "The host doesn't exist"
             )
@@ -169,17 +163,14 @@ class Tile2(Static):
         autopwn.getEdbExploit(result, get_all=True)
         self.app.call_from_thread(self.parent.query_one("#logs", Pretty).update, result)
 
-        (edbExploits, titles, metaexploits) = autopwn.createExploitList(result)
-        titles = [title[1] for title in titles]
+        (edbExploits, _, _) = autopwn.createExploitList(result)
 
         STATE["computers"][ip].vulnerabilities = edbExploits
-        STATE["vulnerabilities"] = edbExploits
-        vuln_list = self.parent.query_one("#vuln_list", OptionList)
-        self.app.call_from_thread(vuln_list.clear_options)
-        self.app.call_from_thread(vuln_list.add_options, titles)
+        vulnChoice = self.parent.query_one(VulnChoice)
+        self.app.call_from_thread(vulnChoice.build_vuln_list, edbExploits)
         tab = self.app.query_one(Tile5)
         self.app.call_from_thread(tab.set_active_tab, "vuln_tab")
-        self.app.call_from_thread(vuln_list.focus)
+        self.app.call_from_thread(vulnChoice.query_one(OptionList).focus)
 
     @work(exclusive=True, thread=True)
     def perform_network_scan(self, ip: str) -> None:
@@ -187,8 +178,9 @@ class Tile2(Static):
         result = postexploit.scanNetwork(ip)
         self.app.call_from_thread(self.parent.query_one("#logs", Pretty).update, result)
         for ip in result:
-            if ip not in STATE["computers"]:
-                STATE["computers"][ip + "/" + mask] = Computer()
+            full_ip = ip + "/" + mask
+            if full_ip not in STATE["computers"]:
+                STATE["computers"][full_ip] = Computer()
         self.app.call_from_thread(self.parent.query_one(Tile4).rebuild_tree)
 
 
@@ -247,6 +239,9 @@ class Tile4(Static):
             node.set_label("*" + str(node.label))
             self.connected = node
         self.app.query_one(ComputerInfos).scan(ip)
+        self.app.query_one(VulnChoice).build_vuln_list(
+            STATE["computers"][ip].vulnerabilities
+        )
         STATE["IP"] = ip
 
 
@@ -266,7 +261,7 @@ class ComputerInfos(Static):
     def scan(self, IP: str | None = None):
         shell_id = None
         computer = Computer()
-        if not IP or IP in map(lambda x: x[1], postexploit.getTargetConnections()):
+        if not IP or STATE["computers"].get(IP, Computer()).is_local:
             # infos machine locale
             computer.os = postexploit.getOS()
             for inter in postexploit.getTargetConnections():
@@ -292,7 +287,7 @@ class ComputerInfos(Static):
         s = ""
         if shell_id:
             s += "connected: yes\n"
-        elif IP and IP not in map(lambda x: x[1], postexploit.getTargetConnections()):
+        elif IP and not STATE["computers"].get(IP, Computer()).is_local:
             s += "connected: no - backup infos\n"
         s += "##### Machine distribution\n"
         s += computer.os
@@ -308,14 +303,24 @@ class ComputerInfos(Static):
 
 
 class VulnChoice(Static):
+    vulnerabilities = [
+        "Here are the vulns after being found",
+    ]
+
     def compose(self) -> ComposeResult:
         with Container():
-            yield OptionList(*vulnerabilities, id="vuln_list")
+            yield OptionList(*(self.vulnerabilities), id="vuln_list")
+
+    def build_vuln_list(self, vulnerabilities):
+        self.vulnerabilities = vulnerabilities
+        titles = [pwn["Title"] for pwn in vulnerabilities]
+        vuln_list = self.query_one(OptionList)
+        vuln_list.clear_options()
+        vuln_list.add_options(titles)
 
     @on(OptionList.OptionSelected)
     def select_vuln(self, event: OptionList.OptionSelected) -> None:
-        STATE["vulnerability"] = event.option_index
-        vuln = STATE["vulnerabilities"][event.option_index]
+        vuln = self.vulnerabilities[event.option_index]
         if "Metasploit" in vuln["Title"]:
             modules = autopwn.searchModules(STATE["client"], vuln["Title"][:-12])
             STATE["exploits"] = modules
@@ -632,7 +637,9 @@ class Pwnguin(App):
         STATE["computers"] = loaded
         # add local interfaces
         for inter in postexploit.getTargetConnections():
-            STATE["computers"][inter[1]] = STATE["computers"].get(inter[1], Computer())
+            STATE["computers"][inter[1]] = STATE["computers"].get(
+                inter[1], Computer(is_local=True)
+            )
         self.app.call_from_thread(self.query_one(Tile4).rebuild_tree)
         # start metasploit
         client = autopwn.runMetasploit(reinit=True, show=False, wait=False)

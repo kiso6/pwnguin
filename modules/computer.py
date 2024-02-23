@@ -4,11 +4,14 @@ import ipaddress
 
 class Computer:
 
-    def __init__(self):
+    def __init__(self, is_local=False):
         self.vulnerabilities: list[dict] = []
         self.networks: list[dict] = (
             []
         )  # iface/network couples (network is a computer ip with mask)
+        self.is_local = (
+            is_local  # Is this computer the computer from which the tests are done
+        )
         self.arp: list[dict] = []  # arp table ip/mac/iface triples
         self.os: str = ""
         self.infection: dict = {"infected": False, "via": None}
@@ -36,6 +39,7 @@ class Computer:
         ]
         computer.os = json_dict["os"]
         computer.infection = json_dict["infection"]
+        computer.is_local = json_dict["is_local"]
         return computer
 
 
