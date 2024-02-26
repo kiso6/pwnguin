@@ -82,6 +82,45 @@ def add_ip_to_network(networks, network, ip):
         networks[network].append(ip)
 
 
+def actions_to_reconnect(computers: dict[str, Computer]) -> list:
+    availables = []
+    infected = []
+    actions = []
+    for ip, computer in computers.items():
+        if computer.is_local:
+            availables.append(ip)
+        if computer.infection["infected"]:
+            infected.append(
+                {
+                    "on": ip,
+                    "via": computer.infection["via"],
+                    "port": computer.infection["port"],
+                }
+            )
+    while len(infected) != 0:
+        new_availables = list(filter(lambda x: x["via"] in availables, infected))
+        to_add = []
+        for x in new_availables:
+            infected.remove(x)
+            actions.append(f"reconnect {x['on']} via {x['via']} on port {x['port']}")
+        availables += map(lambda x: x["on"], new_availables)
+        for infect in infected:
+            network_to_find = str(ipaddress.ip_network(infect["via"], strict=False))
+            for avail in availables:
+                for iface in computers[avail].networks:
+                    if network_to_find == str(
+                        ipaddress.ip_network(iface["network"], strict=False)
+                    ):
+                        to_add.append(infect["on"])
+                        actions.append(f"autoroute {network_to_find} via {avail}")
+                        actions.append(
+                            f"reconnect {infect['on']} via {infect['via']} on port {infect['port']}"
+                        )
+                        infected.remove(infect)
+        availables += to_add
+    return actions
+
+
 if __name__ == "__main__":
     c1 = Computer()
     c1.os = "Linux Mint 21.1 vera x86_64"
@@ -94,7 +133,22 @@ if __name__ == "__main__":
     c2 = Computer()
 
     to_save = {"192.168.155.130/24": c1, "10.0.2.6/24": c2}
-    save(to_save)
+    # save(to_save)
     loaded = load()
 
     print(computers_to_network(loaded))
+
+    actions = actions_to_reconnect(loaded)
+    print(actions)
+    for action in actions:
+        action_l = action.split(" ")
+        if action_l[0] == "reconnect":
+            LHOST = action_l[3].split("/")[0]
+            LPORT = action_l[6]
+            print(f"listen on {LHOST}:{LPORT}")
+        else:
+            SUBNET = action_l[1]
+            SESSION = action_l[3].split("/")[
+                0
+            ]  # need to find IP in connected sessions to find the session number
+            print(f"autoroute {SUBNET} via {SESSION}")
