@@ -22,8 +22,10 @@ class Computer:
     def add_arp_entry(self, ip: str, mac: str, iface: str):
         self.arp.append({"IP": ip, "MAC": mac, "iface": iface})
 
-    def set_infection(self, infected: bool, via: str | None = None):
-        self.infection = {"infected": infected, "via": via}
+    def set_infection(
+        self, infected: bool, via: str | None = None, port: int | None = None
+    ):
+        self.infection = {"infected": infected, "via": via, "port": port}
 
     @classmethod
     def fromJSON(cls, json_dict):
@@ -121,11 +123,18 @@ def actions_to_reconnect(computers: dict[str, Computer]) -> list:
     return actions
 
 
+def find_full_ip(ip: str, computers: dict[str, Computer]) -> str:
+    for c_ip in computers:
+        if c_ip.startswith(ip):
+            return c_ip
+    return ip
+
+
 if __name__ == "__main__":
     c1 = Computer()
     c1.os = "Linux Mint 21.1 vera x86_64"
     c1.vulnerabilities = ["UnrealIRCD 3.2.8.1 Backdoor Command Execution"]
-    c1.set_infection(True, via="192.168.155.41:5555")
+    c1.set_infection(True, via="192.168.155.41/24", port=4444)
     c1.add_arp_entry("192.168.155.41", "ab:cd:ef:gh:ik:kl", "wlo1")
     c1.add_arp_entry("10.0.2.6", "12:34:56:78:90:12", "et0")
     c1.add_network("wlo1", "192.168.155.130/24")

