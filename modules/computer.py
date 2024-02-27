@@ -15,6 +15,7 @@ class Computer:
         self.arp: list[dict] = []  # arp table ip/mac/iface triples
         self.os: str = ""
         self.infection: dict = {"infected": False, "via": None}
+        self.credentials = []
 
     def add_network(self, iface: str, network: str):
         self.networks.append({"iface": iface, "network": network})
@@ -42,6 +43,7 @@ class Computer:
         computer.os = json_dict["os"]
         computer.infection = json_dict["infection"]
         computer.is_local = json_dict["is_local"]
+        computer.credentials = json_dict["credentials"]
         return computer
 
 
