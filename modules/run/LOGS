@@ -40,3 +40,69 @@
 [0;0m[33m[!] CRT [2024-02-22 16:00:09.123461] : Timeout error for ./revshell. 
 [0;0m[0;32m[i] INF [2024-02-22 15:59:24.096309] : Launched autopwn.
 [0;0m
+[0;32m[i] INF [2024-02-26 11:39:15.622812] : Launched autopwn.
+[0;0m[0;32m[i] INF [2024-02-26 11:39:33.857137] : Launched autopwn.
+[0;0m[0;32m[i] INF [2024-02-26 11:39:38.678275] : Started process msfrpcd
+[0;0m[0;32m[i] INF [2024-02-26 11:39:38.707246] : Started process msfdb (arg reinit)
+[0;0m[0;32m[i] INF [2024-02-26 11:39:49.604277] : Launched autopwn.
+[0;0m[0;32m[i] INF [2024-02-26 11:39:55.034328] : Started process msfrpcd
+[0;0m[0;32m[i] INF [2024-02-26 11:39:55.049422] : Started process msfdb (arg reinit)
+[0;0m[0;32m[i] INF [2024-02-26 11:41:18.727297] : Launched autopwn.
+[0;0m[0;32m[i] INF [2024-02-26 11:41:23.292502] : Started process msfrpcd
+[0;0m[0;32m[i] INF [2024-02-26 11:41:23.316622] : Started process msfdb (arg reinit)
+[0;0m[0;32m[i] INF [2024-02-27 14:41:59.759607] : Launched autopwn.
+[0;0m[0;32m[i] INF [2024-02-27 14:42:09.933362] : Launched autopwn.
+[0;0m[0;32m[i] INF [2024-02-27 14:42:14.655219] : Started process msfrpcd
+[0;0m[0;32m[i] INF [2024-02-27 14:42:14.678458] : Started process msfdb (arg reinit)
+[0;0m[0;32m[i] INF [2024-02-27 14:42:58.227983] : Launched autopwn.
+[0;0m[0;32m[i] INF [2024-02-27 14:43:02.160427] : Started process msfrpcd
+[0;0m[0;32m[i] INF [2024-02-27 14:43:02.172907] : Started process msfdb (arg reinit)
+[0;0m[0;32m[i] INF [2024-02-27 14:45:22.065703] : Launched autopwn.
+[0;0m[0;32m[i] INF [2024-02-27 14:45:26.149331] : Started process msfrpcd
+[0;0m[0;32m[i] INF [2024-02-27 14:45:26.161394] : Started process msfdb (arg reinit)
+[0;0m[0;32m[i] INF [2024-02-27 14:49:34.231701] : Launched autopwn.
+[0;0m[0;32m[i] INF [2024-02-27 14:49:38.550220] : Started process msfrpcd
+[0;0m[0;32m[i] INF [2024-02-27 14:49:38.564839] : Started process msfdb (arg reinit)
+[0;0m[~] LOG [2024-02-27 14:52:35.306172] : Bruteforcing user/password for 127.0.0.1
+[0;0m[~] LOG [2024-02-27 14:52:35.306228] : Processing wordlist for input : ./init/userlist
+[0;0m[~] LOG [2024-02-27 14:52:35.306731] : Processing wordlist for input : ./init/passlist
+[0;0m[0;32m[i] INF [2024-02-27 14:52:24.287569] : Launched autopwn.
+[0;0m[0;32m[i] INF [2024-02-27 14:52:29.518877] : Started process msfrpcd
+[0;0m[0;32m[i] INF [2024-02-27 14:52:29.533510] : Started process msfdb (arg reinit)
+[0;0m[~] LOG [2024-02-27 14:53:29.698349] : Bruteforcing user/password for 127.0.0.1
+[0;0m[~] LOG [2024-02-27 14:53:29.698407] : Processing wordlist for input : ./init/userlist
+[0;0m[~] LOG [2024-02-27 14:53:29.700061] : Processing wordlist for input : ./init/passlist
+[0;0m[0;32m[i] INF [2024-02-27 14:53:15.201573] : Launched autopwn.
+[0;0m[0;32m[i] INF [2024-02-27 14:53:19.768399] : Started process msfrpcd
+[0;0m[0;32m[i] INF [2024-02-27 14:53:19.783043] : Started process msfdb (arg reinit)
+[0;0m[~] LOG [2024-02-27 14:54:26.723619] : Bruteforcing user/password for 127.0.0.1
+[0;0m[~] LOG [2024-02-27 14:54:26.723740] : Processing wordlist for input : ./init/userlist
+[0;0m[~] LOG [2024-02-27 14:54:26.726054] : Processing wordlist for input : ./init/passlist
+[0;0m[0;32m[i] INF [2024-02-27 14:54:10.460200] : Launched autopwn.
+[0;0m[0;32m[i] INF [2024-02-27 14:54:15.228719] : Started process msfrpcd
+[0;0m[0;32m[i] INF [2024-02-27 14:54:15.253723] : Started process msfdb (arg reinit)
+[0;0m[~] LOG [2024-02-27 14:56:09.058947] : Bruteforcing user/password for 127.0.0.1
+[0;0m[~] LOG [2024-02-27 14:56:09.059000] : Processing wordlist for input : ./init/userlist
+[0;0m[~] LOG [2024-02-27 14:56:09.066212] : Processing wordlist for input : ./init/passlist
+[0;0m[0;32m[i] INF [2024-02-27 14:55:56.279524] : Launched autopwn.
+[0;0m[0;32m[i] INF [2024-02-27 14:56:04.647304] : Started process msfrpcd
+[0;0m[0;32m[i] INF [2024-02-27 14:56:04.662389] : Started process msfdb (arg reinit)
+[0;0m[~] LOG [2024-02-27 14:56:44.544138] : Bruteforcing user/password for 127.0.0.1
+[0;0m[~] LOG [2024-02-27 14:56:44.544187] : Processing wordlist for input : /home/zasyus/Documents/pwnguin/pwnguin/modules/init/userlist
+[0;0m[~] LOG [2024-02-27 14:56:44.544518] : Processing wordlist for input : /home/zasyus/Documents/pwnguin/pwnguin/modules/init/passlist
+[0;0m[0;32m[i] INF [2024-02-27 14:56:29.946009] : Launched autopwn.
+[0;0m[0;32m[i] INF [2024-02-27 14:56:34.123364] : Started process msfrpcd
+[0;0m[0;32m[i] INF [2024-02-27 14:56:34.136100] : Started process msfdb (arg reinit)
+[0;0m[~] LOG [2024-02-27 14:57:37.118203] : Bruteforcing user/password for 127.0.0.1
+[0;0m[~] LOG [2024-02-27 14:57:37.118253] : Processing wordlist for input : /home/zasyus/Documents/pwnguin/pwnguin/modules/init/userlist
+[0;0m[~] LOG [2024-02-27 14:57:37.118584] : Processing wordlist for input : /home/zasyus/Documents/pwnguin/pwnguin/modules/init/passlist
+[0;0m[0;32m[i] INF [2024-02-27 14:57:23.082625] : Launched autopwn.
+[0;0m[0;32m[i] INF [2024-02-27 14:57:27.124311] : Started process msfrpcd
+[0;0m[0;32m[i] INF [2024-02-27 14:57:27.136891] : Started process msfdb (arg reinit)
+[0;0m[~] LOG [2024-02-27 14:58:03.275614] : Bruteforcing user/password for 127.0.0.1
+[0;0m[~] LOG [2024-02-27 14:58:03.275668] : Processing wordlist for input : ./init/userlist
+[0;0m[~] LOG [2024-02-27 14:58:03.275983] : Processing wordlist for input : ./init/passlist
+[0;0m[0;32m[i] INF [2024-02-27 14:57:51.371865] : Launched autopwn.
+[0;0m[0;32m[i] INF [2024-02-27 14:57:55.557671] : Started process msfrpcd
+[0;0m[0;32m[i] INF [2024-02-27 14:57:55.574923] : Started process msfdb (arg reinit)
+[0;0m

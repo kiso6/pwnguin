@@ -4,7 +4,7 @@ from time import sleep
 from pathlib import Path
 import ipaddress
 import random as rng
-
+from tkinter.filedialog import askopenfilename
 import autopwn
 import sequences
 import getSSH
@@ -244,7 +244,12 @@ class Tile2(Static):
         if ip not in STATE["computers"]:
             STATE["computers"][ip] = Computer()
             self.app.call_from_thread(self.parent.query_one(Tile4).rebuild_tree)
-        usr, pwd = getSSH.getSshCredsAndConn(ip.split("/")[0])
+        usrlist = askopenfilename()
+        passlist = askopenfilename()
+        if (usrlist == () or passlist == ()) :
+            usr, pwd = getSSH.getSshCredsAndConn(ip.split("/")[0])
+        else : 
+            usr, pwd = getSSH.getSshCredsAndConn(ip.split("/")[0],str(usrlist),str(passlist))
         if not usr:
             self.app.call_from_thread(
                 self.parent.query_one("#logs", Pretty).update,
