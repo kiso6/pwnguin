@@ -105,4 +105,10 @@
 [0;0m[0;32m[i] INF [2024-02-27 14:57:51.371865] : Launched autopwn.
 [0;0m[0;32m[i] INF [2024-02-27 14:57:55.557671] : Started process msfrpcd
 [0;0m[0;32m[i] INF [2024-02-27 14:57:55.574923] : Started process msfdb (arg reinit)
+[0;0m[~] LOG [2024-02-27 15:05:30.000969] : Bruteforcing user/password for 127.0.0.1
+[0;0m[~] LOG [2024-02-27 15:05:30.001032] : Processing wordlist for input : ./init/userlist
+[0;0m[~] LOG [2024-02-27 15:05:30.005829] : Processing wordlist for input : ./init/passlist
+[0;0m[0;32m[i] INF [2024-02-27 15:05:17.676640] : Launched autopwn.
+[0;0m[0;32m[i] INF [2024-02-27 15:05:24.067898] : Started process msfrpcd
+[0;0m[0;32m[i] INF [2024-02-27 15:05:24.135092] : Started process msfdb (arg reinit)
 [0;0m

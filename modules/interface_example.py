@@ -244,8 +244,8 @@ class Tile2(Static):
         if ip not in STATE["computers"]:
             STATE["computers"][ip] = Computer()
             self.app.call_from_thread(self.parent.query_one(Tile4).rebuild_tree)
-        usrlist = askopenfilename()
-        passlist = askopenfilename()
+        usrlist = askopenfilename(title="Please chose a user list")
+        passlist = askopenfilename(title ="Please chose a password list")
         if (usrlist == () or passlist == ()) :
             usr, pwd = getSSH.getSshCredsAndConn(ip.split("/")[0])
         else : 
