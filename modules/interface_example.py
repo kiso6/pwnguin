@@ -244,8 +244,8 @@ class Tile2(Static):
         if ip not in STATE["computers"]:
             STATE["computers"][ip] = Computer()
             self.app.call_from_thread(self.parent.query_one(Tile4).rebuild_tree)
-        usrlist = askopenfilename(title="Please chose a user list")
-        passlist = askopenfilename(title="Please chose a password list")
+        usrlist = askopenfilename(title="Please choose a user list")
+        passlist = askopenfilename(title="Please choose a password list")
         if usrlist == () or passlist == ():
             usr, pwd = getSSH.getSshCredsAndConn(ip.split("/")[0])
         else:
@@ -902,7 +902,7 @@ class Pwnguin(App):
                 while task.is_running:
                     sleep(0.1)
             else:
-                self.call_from_thread(logs.update, "adding route to" + action_l[1])
+                self.call_from_thread(logs.update, "adding route to " + action_l[1])
                 autoroute["SUBNET"] = action_l[1]
                 print(action_l[3].split("/")[0])
                 print(autopwn.findShellID(client, action_l[3].split("/")[0]))
