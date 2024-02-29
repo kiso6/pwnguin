@@ -47,7 +47,7 @@ class Computer:
         return computer
 
 
-def save(computers: dict[str, Computer], file_location: str = "./save.json"):
+def save(computers: dict[str, Computer], file_location: str = "./run/save.json"):
     save_str = json.dumps(
         computers, default=lambda o: o.__dict__, sort_keys=True, indent=4
     )
@@ -55,7 +55,7 @@ def save(computers: dict[str, Computer], file_location: str = "./save.json"):
         f.write(save_str)
 
 
-def load(file_location: str = "./save.json") -> dict[str, Computer]:
+def load(file_location: str = "./run/save.json") -> dict[str, Computer]:
     data = {}
     try:
         with open(file_location, "r") as f:
